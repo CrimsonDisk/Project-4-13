@@ -10,7 +10,7 @@ public class Main {
         catch (NumberFormatException e) { winScale = 2; }
 
         //---[Title and going borderless]---
-        JFrame newframe = new JFrame("Project 3-14 alpha0.1");
+        JFrame newframe = new JFrame("Project 3-14 alpha0.2");
         newframe.setUndecorated(true);
         newframe.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
