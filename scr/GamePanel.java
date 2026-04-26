@@ -49,11 +49,25 @@ public class GamePanel extends JPanel implements Runnable {
         this.addKeyListener(new java.awt.event.KeyAdapter() {
             @Override
             public void keyPressed(java.awt.event.KeyEvent e) {
+                int gridX = brickX / brickPixelHitBox;
+                int gridYTop = brickY / brickPixelHitBox;
+                int gridYBottom = (brickY + brickPixelHitBox - 1) / brickPixelHitBox;
+
                 if (e.getKeyCode() == java.awt.event.KeyEvent.VK_LEFT) {
-                    if (brickX > 0) { brickX -= brickPixelHitBox; }
+                    int nextGridX = gridX - 1;
+                    if (nextGridX >= 0) {
+                        if (brickboard[gridYTop][nextGridX] == 0 && brickboard[gridYBottom][nextGridX] == 0) {
+                            brickX -= brickPixelHitBox;
+                        }
+                    }
                 }
                 if (e.getKeyCode() == java.awt.event.KeyEvent.VK_RIGHT) {
-                    if (brickX < screenWidth - brickPixelHitBox) { brickX += brickPixelHitBox; }
+                    int nextGridX = gridX + 1;
+                    if (nextGridX < cols) {
+                        if (brickboard[gridYTop][nextGridX] == 0 && brickboard[gridYBottom][nextGridX] == 0) {
+                            brickX += brickPixelHitBox;
+                        }
+                    }
                 }
                 if (e.getKeyCode() == java.awt.event.KeyEvent.VK_ESCAPE) System.exit(0);
                 if (e.getKeyCode() == java.awt.event.KeyEvent.VK_DOWN) { isFastFalling = true; }
