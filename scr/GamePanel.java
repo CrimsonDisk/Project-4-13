@@ -21,6 +21,7 @@ public class GamePanel extends JPanel implements Runnable {
     private int[][] brickboard = new int[rows][cols];
 
     private Bgm musicPlayer = new Bgm();
+    private Bg background = new Bg();
 
     private int screenWidth = 13 * cols;
     private int screenHeight = 13 * rows;
@@ -90,6 +91,7 @@ public class GamePanel extends JPanel implements Runnable {
     @Override
     public void run() {
         while(true) {
+            background.updateAnimation();
             frameCounter++;
 
             if (frameCounter >= movePixelByFrame) {
@@ -124,10 +126,12 @@ public class GamePanel extends JPanel implements Runnable {
         }
     }
 
-    //---[The texturing stuff]---
+    //---[The Paint Component, the texturing stuff]---
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
         Graphics2D g2 = (Graphics2D) g;
+
+        background.drawGrid(g2, rows, cols, brickPixelHitBox, winScale);
 
         for (int r = rows - 1; r >= 0; r--) {
             for (int c = 0; c < cols; c++) {
