@@ -1,44 +1,26 @@
-import javax.swing.JFrame;
-import javax.swing.JOptionPane;
+import javax.swing.*;
 
 public class Main {
-    public static void main(String[] args) {
-        
-        int scale = 2; 
-        String input = JOptionPane.showInputDialog(null, "Choose your window scale, 2 is recommended.");
-        
-        try {
-            if (input != null && !input.isEmpty()) {
-                scale = Integer.parseInt(input);
-            } else if (input == null) {
-                
-                System.exit(0);
-            }
-        } catch (NumberFormatException e) {
-            
-            JOptionPane.showMessageDialog(null, "Invalid input! Using default scale 2.");
-            scale = 2;
-        }
+    public static void main(String[] args){
 
-        
-        JFrame window = new JFrame();
-        
-        
-        window.setTitle("Project 4-13 alpha 0.5.1");
-        
-        window.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        window.setResizable(false);
+        //---[The window scaling]---
+        String scaleInput = JOptionPane.showInputDialog("Choose your window scale, 2 is recommended.");
+        int winScale = 2;
+        try { winScale = Integer.parseInt(scaleInput); }
+        catch (NumberFormatException e) { winScale = 2; }
 
-        
-        GamePanel gamePanel = new GamePanel(scale);
-        
-        window.add(gamePanel);
-        window.pack(); 
+        //---[Title and going borderless]---
+        JFrame gameframe = new JFrame("beta1.0");
+        gameframe.setUndecorated(true);
+        gameframe.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
-        window.setLocationRelativeTo(null);
-        window.setVisible(true);
+        //---[Game stuff and display size]---
+        Ui uiContainer = new Ui(winScale);
+        gameframe.add(uiContainer);
 
-        
-        gamePanel.startGameThread();
+        //---[Some other display]---
+        gameframe.pack();
+        gameframe.setLocationRelativeTo(null);
+        gameframe.setVisible(true);
     }
 }

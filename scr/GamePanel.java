@@ -5,233 +5,289 @@ import java.io.File;
 import javax.imageio.ImageIO;
 
 public class GamePanel extends JPanel implements Runnable {
-    // ---[Thông số hệ thống]---
+    //---[Main window and scaling stuff]---
+    private Ui ui; 
     private int winScale;
-    private final int cols = 13; 
-    private final int rows = 21; 
-    private final int brickSize = 13;
-    private final int UI_SIDEBAR_WIDTH = 100; 
-    private final int UI_MARGIN = 10;
+    public static final int cols = 13; 
+    public static final int rows = 21; 
+    private int startCol = 5; 
+    public static final int brickPixelHitBox = 13;
 
-    private int score = 0;
-    private boolean isGameOver = false;
+    private float previewPieceTransparency = 0.3f;
+
+    public static final int previewNextPiecePositionY = 170;
+    
+    private int setSpeedBase = 1;
+    private int setSpeedFastFalling = 6;
+    private int movePixelByFrame = 2;
+
     private int[][] brickboard = new int[rows][cols];
     private Bgm musicPlayer = new Bgm();
     private Bg background = new Bg();
-    private int currentX, currentY, currentType, nextType;
-    private int[][] currentShape, nextShape;
-    private BufferedImage[] brickTexture = new BufferedImage[6];
-    private Thread gameThread;
+    private Sfx sfxPlayer = new Sfx();
+
+    private int screenWidth = brickPixelHitBox * cols;
+    private int screenHeight = brickPixelHitBox * rows;
+
+    private int[][] currentShape;
+    private int[][] nextShape; 
+
+    private boolean isFastFalling = false;
+    private int currentBrickIDColour = 1;
     private java.util.Random rand = new java.util.Random();
 
-    private final int[][][] SHAPES = {
-        {{0,1}, {1,1}, {2,1}, {3,1}}, // I
-        {{0,0}, {1,0}, {0,1}, {1,1}}, // O
-        {{1,0}, {0,1}, {1,1}, {2,1}}, // T
-        {{1,0}, {2,0}, {0,1}, {1,1}}, // S
-        {{0,0}, {1,0}, {1,1}, {2,1}}, // Z
-        {{0,0}, {0,1}, {1,1}, {2,1}}, // J
-        {{2,0}, {0,1}, {1,1}, {2,1}}  // L
-    };
+    //---[Brick math, positions]---
+    private int brickX = brickPixelHitBox * startCol;
+    private int brickY = 0;
+    private int frameCounter = 0;
+    private BufferedImage[] brickTexture = new BufferedImage[6];
 
-    public GamePanel(int winScale) {
+    public GamePanel(int winScale, Ui ui) {
         this.winScale = winScale;
-        int totalWidth = (cols * brickSize + UI_SIDEBAR_WIDTH + UI_MARGIN * 3) * winScale;
-        int totalHeight = (rows * brickSize + UI_MARGIN * 2) * winScale;
-        this.setPreferredSize(new Dimension(totalWidth, totalHeight));
-        this.setBackground(new Color(25, 25, 25));
-        this.setDoubleBuffered(true);
-        this.setFocusable(true);
+        this.ui = ui;
+        this.setPreferredSize(new Dimension(screenWidth * winScale, screenHeight * winScale));
+        this.setBackground(Color.BLACK);
+
         loadTexture();
         musicPlayer.playAudio("resources/music/Bad Apple!! (PJSK collab).wav");
-        nextType = rand.nextInt(SHAPES.length);
-        nextShape = SHAPES[nextType];
-        spawnBrick();
 
+        spawnNewShape();
+
+        Thread gameThread = new Thread(this);
+        gameThread.start();
+
+        this.setFocusable(true);
         this.addKeyListener(new java.awt.event.KeyAdapter() {
             @Override
             public void keyPressed(java.awt.event.KeyEvent e) {
-                if (isGameOver) { if (e.getKeyCode() == java.awt.event.KeyEvent.VK_ENTER) restartGame(); return; }
-                if (e.getKeyCode() == java.awt.event.KeyEvent.VK_LEFT) { if (canMove(currentX - brickSize, currentY, currentShape)) currentX -= brickSize; }
-                if (e.getKeyCode() == java.awt.event.KeyEvent.VK_RIGHT) { if (canMove(currentX + brickSize, currentY, currentShape)) currentX += brickSize; }
-                if (e.getKeyCode() == java.awt.event.KeyEvent.VK_UP) rotateShape();
-                if (e.getKeyCode() == java.awt.event.KeyEvent.VK_DOWN) isFastFalling = true;
-                if (e.getKeyCode() == java.awt.event.KeyEvent.VK_ESCAPE) System.exit(0);
+                if (e.getKeyCode() == java.awt.event.KeyEvent.VK_LEFT) {
+                    if (isValidPosition(brickX - brickPixelHitBox, brickY, currentShape)) brickX -= brickPixelHitBox;
+                }
+                if (e.getKeyCode() == java.awt.event.KeyEvent.VK_RIGHT) {
+                    if (isValidPosition(brickX + brickPixelHitBox, brickY, currentShape)) brickX += brickPixelHitBox;
+                }
+                if (e.getKeyCode() == java.awt.event.KeyEvent.VK_Q) {
+                    rotate(false);
+                    sfxPlayer.playSFX("resources/sfx/Land.wav");
+                }
+                if (e.getKeyCode() == java.awt.event.KeyEvent.VK_E) {
+                    rotate(true);
+                    sfxPlayer.playSFX("resources/sfx/Land.wav");
+                }
+
+                if (e.getKeyCode() == java.awt.event.KeyEvent.VK_ESCAPE) { System.exit(0); }
+                if (e.getKeyCode() == java.awt.event.KeyEvent.VK_DOWN) { isFastFalling = true; }
             }
             @Override
-            public void keyReleased(java.awt.event.KeyEvent e) { if (e.getKeyCode() == java.awt.event.KeyEvent.VK_DOWN) isFastFalling = false; }
+            public void keyReleased(java.awt.event.KeyEvent e) {
+                if (e.getKeyCode() == java.awt.event.KeyEvent.VK_DOWN) { isFastFalling = false; }
+            }
         });
     }
+
+    //---[The shape spawn thing]---
+    private void spawnNewShape() {
+        if (nextShape == null) nextShape = Shapes.getRandomShape();
+        currentShape = nextShape;
+        nextShape = Shapes.getRandomShape();
+        ui.setNextShape(nextShape); 
+
+        brickY = 0;
+        brickX = brickPixelHitBox * startCol;
+        currentBrickIDColour = rand.nextInt(6) + 1;
+    }
+
+    private void rotate(boolean clockwise) {
+        int[][] rotated = Shapes.rotate(currentShape, clockwise);
+        int[] kicks = {0, -brickPixelHitBox, brickPixelHitBox, -brickPixelHitBox * 2, brickPixelHitBox * 2};
+        for (int kick : kicks) {
+            if (isValidPosition(brickX + kick, brickY, rotated)) {
+                brickX += kick;
+                currentShape = rotated;
+                return;
+            }
+        }
+    }
+
+    private boolean isValidPosition(int x, int y, int[][] shape) {
+        for (int r = 0; r < shape.length; r++) {
+            for (int c = 0; c < shape[r].length; c++) {
+                if (shape[r][c] == 1) {
+                    int targetX = (x / brickPixelHitBox) + c;
+                    int targetY = (y / brickPixelHitBox) + r;
+
+                    // Wall boundaries
+                    if (targetX < 0 || targetX >= cols || targetY >= rows) return false;
+                    
+                    // Collision with placed bricks
+                    if (targetY >= 0 && brickboard[targetY][targetX] > 0) return false;
+                }
+            }
+        }
+        return true;
+    }
+
+    private void checkForFullRow() {
+        for (int currentRow = rows - 1; currentRow > 0; currentRow--) {
+            boolean rowIsFull = true;
+            for (int currentCol = 0; currentCol < cols; currentCol++) {
+                if (brickboard[currentRow][currentCol] == 0) {
+                    rowIsFull = false;
+                    break;
+                }
+            }
+            if (rowIsFull) {
+                ui.updateScore(100); 
+                for (int r = currentRow; r > 0; r--) {
+                    for (int c = 0; c < cols; c++) {
+                        brickboard[r][c] = brickboard[r - 1][c];
+                    }
+                }
+                sfxPlayer.playSFX("resources/sfx/Destroy.wav");
+                currentRow++; 
+            }
+        }
+    }
+
+    private void loadTexture() {
+        String[] colourNames = {"Purple", "Red", "Orange", "Yellow", "Green", "Cyan"};
+        try {
+            for (int i = 0; i < colourNames.length; i++) {
+                brickTexture[i] = ImageIO.read(new File("resources/textures/bricks/" + colourNames[i] + " Brick.png"));
+            }
+        } catch (Exception e) { System.out.println("Texture Error: " + e.getMessage()); }
+    }
+
+    @Override
+    public void run() {
+        while(true) {
+            background.updateAnimation();
+            frameCounter++;
+
+            if (frameCounter >= movePixelByFrame) {
+                int currentSpeed = (isFastFalling) ? setSpeedFastFalling : setSpeedBase;
+                
+                for (int i = 0; i < currentSpeed; i++) {
+                    if (brickY % brickPixelHitBox == 0) {
+                        if (!isValidPosition(brickX, brickY + brickPixelHitBox, currentShape)) {
+                            for (int r = 0; r < currentShape.length; r++) {
+                                for (int c = 0; c < currentShape[r].length; c++) {
+                                    if (currentShape[r][c] == 1) {
+                                        int gridY = (brickY / brickPixelHitBox) + r;
+                                        int gridX = (brickX / brickPixelHitBox) + c;
+
+                                        if (gridY >= 0 && gridY < rows && gridX >= 0 && gridX < cols) {
+                                            brickboard[gridY][gridX] = currentBrickIDColour;
+                                        }
+                                    }
+                                }
+                            }
+                            checkForFullRow();
+                            sfxPlayer.playSFX("resources/sfx/MightyUnspin.wav");
+                            spawnNewShape();
+                            isFastFalling = false;
+                            ui.repaint(); 
+                            break;
+                        }
+                    }
+                    brickY++;
+                }
+                frameCounter = 0;
+            }
+            repaint();
+            try { Thread.sleep(16); } catch (Exception e) {}
+        }
+    }
+
+    //---[A check for collision for the preview brick, this is a lot of code, I start to get confused now. Basically this code goes down until it hits an object.]---
+    private boolean checkCollision(int x, int y, int[][] shape) {
+        for (int r = 0; r < shape.length; r++) {
+            for (int c = 0; c < shape[r].length; c++) {
+                if (shape[r][c] == 1) {
+                    int boardX = (x / brickPixelHitBox) + c;
+                    int boardY = (y / brickPixelHitBox) + r;
+
+                    // Check for bottom floor boundary
+                    if (boardY >= rows) return true;
+
+                    // Check for wall boundaries
+                    if (boardX < 0 || boardX >= cols) return true;
+
+                    // Check for collision with existing bricks on board
+                    if (boardY >= 0 && brickboard[boardY][boardX] > 0) return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    //---[The brick preview]---
+    private int getLandingY() {
+        int snappedGhostGridPositionY = (brickY / brickPixelHitBox) * brickPixelHitBox;
+        int ghostY = snappedGhostGridPositionY;
+        // Increase by the size of one brick until a collision is found, then we get the supposed landing position, I think.
+        while (!checkCollision(brickX, ghostY + brickPixelHitBox, currentShape)) {
+            ghostY += brickPixelHitBox;
+        }
+        return ghostY;
+    }
+
 
     @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
         Graphics2D g2 = (Graphics2D) g;
-        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        background.drawGrid(g2, rows, cols, brickPixelHitBox, winScale);
 
-        // 1. VẼ KHUNG CHƠI CHÍNH
-        int boardX = UI_MARGIN * winScale;
-        int boardY = UI_MARGIN * winScale;
-        int boardW = cols * brickSize * winScale;
-        int boardH = rows * brickSize * winScale;
-        g2.setColor(Color.BLACK);
-        g2.fillRect(boardX, boardY, boardW, boardH);
-        
-        g2.translate(boardX, boardY);
-        background.drawGrid(g2, rows, cols, brickSize, winScale);
-        
-        // Vẽ gạch đã cố định
-        for (int r = 0; r < rows; r++) {
+        for (int r = rows - 1; r >= 0; r--) {
             for (int c = 0; c < cols; c++) {
-                if (brickboard[r][c] > 0) drawPerfectBrick(g2, c * brickSize, r * brickSize, brickboard[r][c] - 1);
+                if (brickboard[r][c] > 0) {
+                    g2.drawImage(brickTexture[brickboard[r][c] - 1], 
+                        c * brickPixelHitBox * winScale, 
+                        (r * brickPixelHitBox - 6) * winScale, 
+                        brickPixelHitBox * winScale, 
+                        (brickPixelHitBox + 6) * winScale, 
+                        null);
+                }
             }
         }
 
-        if (!isGameOver) {
-            // ---[ VẼ BÓNG CỦA KHỐI (GHOST BLOCK) ]---
-            int ghostY = currentY;
-            // Tìm vị trí thấp nhất có thể rơi xuống
-            while (canMove(currentX, ghostY + brickSize, currentShape)) {
-                ghostY += brickSize;
+        if (currentShape != null) {
+            int landingY = getLandingY();
+            Composite originalComposite = g2.getComposite();
+
+            // Set transparency
+            g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, previewPieceTransparency));
+
+            for (int r = currentShape.length - 1; r >= 0; r--) {
+                for (int c = 0; c < currentShape[r].length; c++) {
+                    if (currentShape[r][c] == 1) {
+                        int drawX = (brickX + (c * brickPixelHitBox)) * winScale;
+
+                        int drawY = (landingY + (r * brickPixelHitBox) - 6) * winScale;
+                        g2.drawImage(brickTexture[currentBrickIDColour - 1], drawX, drawY, 
+                                    brickPixelHitBox * winScale, (brickPixelHitBox + 6) * winScale, null);
+                    }
+                }
             }
             
-            // Thiết lập độ trong suốt cho bóng (30% độ đậm)
-            g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.3f));
-            for (int[] p : currentShape) {
-                drawPerfectBrick(g2, currentX + (p[0] * brickSize), ghostY + (p[1] * brickSize), currentType % 6);
-            }
-            // Trả lại độ đậm 100% để vẽ các phần khác
-            g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1.0f));
+            // Here will reset transparency to draw the real piece normally
+            g2.setComposite(originalComposite);
 
-            // Vẽ khối gạch thật đang rơi
-            for (int[] p : currentShape) {
-                drawPerfectBrick(g2, currentX + (p[0] * brickSize), currentY + (p[1] * brickSize), currentType % 6);
-            }
-        }
-        g2.translate(-boardX, -boardY);
-
-        // 2. VẼ SIDEBAR (SCORE & NEXT)
-        int sideX = boardX + boardW + UI_MARGIN * winScale;
-        int sideW = UI_SIDEBAR_WIDTH * winScale;
-        
-        // VẼ SCORE
-        int scoreY = UI_MARGIN * winScale;
-        g2.setColor(Color.WHITE);
-        g2.drawRect(sideX, scoreY, sideW, 50 * winScale);
-        g2.setFont(new Font("Arial", Font.BOLD, 12 * winScale));
-        drawCenteredString(g2, "SCORE", sideX, scoreY + 18 * winScale, sideW);
-        g2.setFont(new Font("Monospaced", Font.BOLD, 16 * winScale));
-        drawCenteredString(g2, String.format("%06d", score), sideX, scoreY + 40 * winScale, sideW);
-
-        // VẼ NEXT (CĂN GIỮA)
-        int nextBoxY = boardY + boardH - sideW;
-        g2.setColor(Color.WHITE);
-        g2.drawRect(sideX, nextBoxY, sideW, sideW);
-        drawCenteredString(g2, "NEXT", sideX, nextBoxY + 20 * winScale, sideW);
-
-        int minX = 4, maxX = 0, minY = 4, maxY = 0;
-        for (int[] p : nextShape) {
-            if (p[0] < minX) minX = p[0]; if (p[0] > maxX) maxX = p[0];
-            if (p[1] < minY) minY = p[1]; if (p[1] > maxY) maxY = p[1];
-        }
-        int shapeW = (maxX - minX + 1) * brickSize * winScale;
-        int shapeH = (maxY - minY + 1) * brickSize * winScale;
-        int nX = sideX + (sideW - shapeW) / 2 - (minX * brickSize * winScale);
-        int nY = nextBoxY + 25 * winScale + (sideW - 25 * winScale - shapeH) / 2 - (minY * brickSize * winScale);
-
-        for (int[] p : nextShape) {
-            if (brickTexture[nextType % 6] != null)
-                g2.drawImage(brickTexture[nextType % 6], nX + p[0]*brickSize*winScale, nY + p[1]*brickSize*winScale, brickSize*winScale, brickSize*winScale, null);
-        }
-
-        if (isGameOver) {
-            g2.setColor(new Color(0, 0, 0, 200));
-            g2.fillRect(0, 0, getWidth(), getHeight());
-            g2.setColor(Color.RED);
-            g2.setFont(new Font("Arial", Font.BOLD, 24 * winScale));
-            drawCenteredString(g2, "GAME OVER", 0, getHeight() / 2, getWidth());
-        }
-    }
-
-    // ---[ HÀM VẼ GẠCH VÀ HÀM PHỤ TRỢ ]---
-    private void drawPerfectBrick(Graphics2D g2, int x, int y, int texIdx) {
-        if (brickTexture[texIdx] != null) {
-            g2.drawImage(brickTexture[texIdx], x * winScale, y * winScale, brickSize * winScale, brickSize * winScale, null);
-            g2.setColor(new Color(0, 0, 0, 40));
-            g2.drawRect(x * winScale, y * winScale, brickSize * winScale, brickSize * winScale);
-        }
-    }
-
-    private void drawCenteredString(Graphics2D g2, String text, int x, int y, int width) {
-        FontMetrics m = g2.getFontMetrics();
-        g2.drawString(text, x + (width - m.stringWidth(text)) / 2, y);
-    }
-
-    private void loadTexture() {
-        String[] names = {"Purple", "Red", "Orange", "Yellow", "Green", "Cyan"};
-        try { for (int i = 0; i < names.length; i++) brickTexture[i] = ImageIO.read(new File("resources/textures/bricks/" + names[i] + " Brick.png")); }
-        catch (Exception e) { System.out.println("Texture error"); }
-    }
-
-    private void spawnBrick() {
-        currentType = nextType; currentShape = nextShape; currentX = brickSize * 5; currentY = 0;
-        nextType = rand.nextInt(SHAPES.length); nextShape = SHAPES[nextType];
-        if (!canMove(currentX, currentY, currentShape)) isGameOver = true;
-    }
-
-    private boolean canMove(int nX, int nY, int[][] s) {
-        for (int[] p : s) {
-            int tX = (nX / brickSize) + p[0], tY = (nY / brickSize) + p[1];
-            if (tX < 0 || tX >= cols || tY >= rows) return false;
-            if (tY >= 0 && brickboard[tY][tX] > 0) return false;
-        }
-        return true;
-    }
-
-    private void rotateShape() {
-        int[][] r = new int[4][2];
-        for (int i = 0; i < 4; i++) { r[i][0] = 2 - currentShape[i][1]; r[i][1] = currentShape[i][0]; }
-        if (canMove(currentX, currentY, r)) currentShape = r;
-    }
-
-    private void lockToGrid() {
-        for (int[] p : currentShape) {
-            int gX = (currentX / brickSize) + p[0], gY = (currentY / brickSize) + p[1];
-            if (gY >= 0 && gY < rows) brickboard[gY][gX] = (currentType % 6) + 1;
-        }
-    }
-
-    private void checkForFullRow() {
-        int lines = 0;
-        for (int r = rows - 1; r >= 0; r--) {
-            boolean full = true;
-            for (int c = 0; c < cols; c++) if (brickboard[r][c] == 0) full = false;
-            if (full) { lines++; for (int row = r; row > 0; row--) brickboard[row] = brickboard[row-1].clone(); brickboard[0] = new int[cols]; r++; }
-        }
-        if (lines == 1) score += 100; else if (lines == 2) score += 300; else if (lines == 3) score += 500; else if (lines >= 4) score += 800;
-    }
-
-    private void restartGame() { brickboard = new int[rows][cols]; score = 0; isGameOver = false; spawnBrick(); }
-
-    public void startGameThread() { gameThread = new Thread(this); gameThread.start(); }
-
-    private int fallDelay = 40, fastFallDelay = 5; private boolean isFastFalling = false;
-    @Override
-    public void run() {
-        int count = 0;
-        while(gameThread != null) {
-            if (!isGameOver) {
-                background.updateAnimation();
-                int delay = isFastFalling ? fastFallDelay : fallDelay;
-                if (count > delay) {
-                    if (canMove(currentX, currentY + brickSize, currentShape)) currentY += brickSize;
-                    else { lockToGrid(); checkForFullRow(); spawnBrick(); }
-                    count = 0;
+            //---[The falling shapes part]---
+            for (int r = currentShape.length - 1; r >= 0; r--) {
+                for (int c = 0; c < currentShape[r].length; c++) {
+                    if (currentShape[r][c] == 1) {
+                        int drawX = (brickX + (c * brickPixelHitBox)) * winScale;
+                        int drawY = (brickY + (r * brickPixelHitBox) - 6) * winScale;
+                        g2.drawImage(brickTexture[currentBrickIDColour - 1], 
+                            drawX, drawY, 
+                            brickPixelHitBox * winScale, 
+                            (brickPixelHitBox + 6) * winScale, 
+                            null);
+                    }
                 }
-                count++;
             }
-            repaint();
-            try { Thread.sleep(16); } catch (Exception e) {}
         }
     }
 }

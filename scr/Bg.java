@@ -38,7 +38,7 @@ public class Bg {
         if (gridFrames[currentFrame] == null)
             return;
 
-        //Draws and update for each grid texture
+        //Draws and update for each grid texture, nice
         for (int r = 0; r < rows; r++) {
             for (int c = 0; c < cols; c++) {
                 g2.drawImage(gridFrames[currentFrame], (c * brickSize) * scale, (r * brickSize) * scale, brickSize * scale, brickSize * scale, null);
