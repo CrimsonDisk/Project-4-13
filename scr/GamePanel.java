@@ -83,6 +83,16 @@ public class GamePanel extends JPanel implements Runnable {
         });
     }
 
+    //---[Full line check and pop]---
+    private void checkForFullRow() {
+        for (int currentRow = rows - 1; currentRow >= 0; currentRow--) {
+            for (int currentCol = 0; currentCol < cols; currentCol++) {
+                
+            }
+        }
+    }
+
+
     //---[Loads brick textures]---
     private void loadTexture() {
         String[] colourNames = {"Purple", "Red", "Orange", "Yellow", "Green", "Cyan"};
