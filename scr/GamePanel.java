@@ -27,12 +27,14 @@ public class GamePanel extends JPanel implements Runnable {
     private int screenHeight = 13 * rows;
 
     private boolean isFastFalling = false;
+    private int currentBrickIDColour = 1;
+    private java.util.Random rand = new java.util.Random();
 
     //---[Brick math, positions and game window scaling, size, background]---
     private int brickX = brickPixelHitBox *  startCol;
     private int brickY = 0;
     private int frameCounter = 0;
-    private BufferedImage brickImg;
+    private BufferedImage[] brickTexture = new BufferedImage[6];
 
     public GamePanel(int winScale) {
         this.winScale = winScale;
@@ -83,7 +85,14 @@ public class GamePanel extends JPanel implements Runnable {
 
     //---[Loads brick textures]---
     private void loadTexture() {
-        try { brickImg = ImageIO.read(new File("resources/textures/bricks/Purple Brick.png")); }
+        String[] colourNames = {"Purple", "Red", "Orange", "Yellow", "Green", "Cyan"};
+
+        try {
+            for (int i = 0; i < colourNames.length; i++) {
+                String path = "resources/textures/bricks/" + colourNames[i] + " Brick.png";
+                brickTexture[i] = ImageIO.read(new File(path));
+            }
+        }
         catch (Exception e) { System.out.println("Cannot load, possibly missing texture: " + e.getMessage()); }
     }
 
@@ -104,17 +113,18 @@ public class GamePanel extends JPanel implements Runnable {
 
                     boolean isBrickBelow = false;
                     if (gridY + 1 < rows) {
-                        if (brickboard[gridY + 1][gridX] == 1) { isBrickBelow = true; }
+                        if (brickboard[gridY + 1][gridX] > 0) { isBrickBelow = true; }
                     }
 
                     //Falling and stopping checks
                     if (brickY < screenHeight - brickPixelHitBox && !isBrickBelow) { brickY++; }
                     else {
-                        brickboard[gridY][gridX] = 1;
+                        brickboard[gridY][gridX] = currentBrickIDColour;
 
                         brickY = 0;
                         brickX = brickPixelHitBox * startCol;
                         isFastFalling = false;
+                        currentBrickIDColour = rand.nextInt(6) + 1;
                         break;
                     }
                 }
@@ -135,14 +145,15 @@ public class GamePanel extends JPanel implements Runnable {
 
         for (int r = rows - 1; r >= 0; r--) {
             for (int c = 0; c < cols; c++) {
-                if (brickboard[r][c] == 1) {
-                    g2.drawImage(brickImg, (c * brickPixelHitBox) * winScale, ((r * brickPixelHitBox) - 6) * winScale, brickPixelHitBox * winScale, (brickPixelHitBox + 6) * winScale,null);
+                int colourID = brickboard[r][c];
+                if (colourID > 0) {
+                    g2.drawImage(brickTexture[colourID - 1], (c * brickPixelHitBox) * winScale, ((r * brickPixelHitBox) - 6) * winScale, brickPixelHitBox * winScale, (brickPixelHitBox + 6) * winScale,null);
                 }
             }
         }
 
-        if (brickImg != null) {
-            g2.drawImage(brickImg, brickX * winScale, (brickY - 6) * winScale, brickPixelHitBox * winScale, (brickPixelHitBox + 6) * winScale, null);
+        if (brickTexture != null) {
+            g2.drawImage(brickTexture[currentBrickIDColour - 1], brickX * winScale, (brickY - 6) * winScale, brickPixelHitBox * winScale, (brickPixelHitBox + 6) * winScale, null);
         }
 
     }
