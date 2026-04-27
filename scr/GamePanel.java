@@ -5,7 +5,7 @@ import java.io.File;
 import javax.imageio.ImageIO;
 
 public class GamePanel extends JPanel implements Runnable {
-    // ---[Thông số hệ thống giữ nguyên]---
+    // ---[Thông số hệ thống]---
     private int winScale;
     private final int cols = 13; 
     private final int rows = 21; 
@@ -18,10 +18,8 @@ public class GamePanel extends JPanel implements Runnable {
     private int[][] brickboard = new int[rows][cols];
     private Bgm musicPlayer = new Bgm();
     private Bg background = new Bg();
-    private int currentX, currentY, currentType; 
-    private int nextType;
-    private int[][] currentShape;
-    private int[][] nextShape;
+    private int currentX, currentY, currentType, nextType;
+    private int[][] currentShape, nextShape;
     private BufferedImage[] brickTexture = new BufferedImage[6];
     private Thread gameThread;
     private java.util.Random rand = new java.util.Random();
@@ -81,58 +79,69 @@ public class GamePanel extends JPanel implements Runnable {
         
         g2.translate(boardX, boardY);
         background.drawGrid(g2, rows, cols, brickSize, winScale);
+        
+        // Vẽ gạch đã cố định
         for (int r = 0; r < rows; r++) {
             for (int c = 0; c < cols; c++) {
                 if (brickboard[r][c] > 0) drawPerfectBrick(g2, c * brickSize, r * brickSize, brickboard[r][c] - 1);
             }
         }
+
         if (!isGameOver) {
-            for (int[] p : currentShape) drawPerfectBrick(g2, currentX + (p[0] * brickSize), currentY + (p[1] * brickSize), currentType % 6);
+            // ---[ VẼ BÓNG CỦA KHỐI (GHOST BLOCK) ]---
+            int ghostY = currentY;
+            // Tìm vị trí thấp nhất có thể rơi xuống
+            while (canMove(currentX, ghostY + brickSize, currentShape)) {
+                ghostY += brickSize;
+            }
+            
+            // Thiết lập độ trong suốt cho bóng (30% độ đậm)
+            g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.3f));
+            for (int[] p : currentShape) {
+                drawPerfectBrick(g2, currentX + (p[0] * brickSize), ghostY + (p[1] * brickSize), currentType % 6);
+            }
+            // Trả lại độ đậm 100% để vẽ các phần khác
+            g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1.0f));
+
+            // Vẽ khối gạch thật đang rơi
+            for (int[] p : currentShape) {
+                drawPerfectBrick(g2, currentX + (p[0] * brickSize), currentY + (p[1] * brickSize), currentType % 6);
+            }
         }
         g2.translate(-boardX, -boardY);
 
-        // 2. SIDEBAR (SCORE & NEXT)
+        // 2. VẼ SIDEBAR (SCORE & NEXT)
         int sideX = boardX + boardW + UI_MARGIN * winScale;
         int sideW = UI_SIDEBAR_WIDTH * winScale;
-
+        
         // VẼ SCORE
         int scoreY = UI_MARGIN * winScale;
-        int scoreH = 50 * winScale;
         g2.setColor(Color.WHITE);
-        g2.drawRect(sideX, scoreY, sideW, scoreH);
+        g2.drawRect(sideX, scoreY, sideW, 50 * winScale);
         g2.setFont(new Font("Arial", Font.BOLD, 12 * winScale));
         drawCenteredString(g2, "SCORE", sideX, scoreY + 18 * winScale, sideW);
         g2.setFont(new Font("Monospaced", Font.BOLD, 16 * winScale));
         drawCenteredString(g2, String.format("%06d", score), sideX, scoreY + 40 * winScale, sideW);
 
-        // ---[ VẼ NEXT - CĂN GIỮA KHỐI GẠCH ]---
+        // VẼ NEXT (CĂN GIỮA)
         int nextBoxY = boardY + boardH - sideW;
         g2.setColor(Color.WHITE);
         g2.drawRect(sideX, nextBoxY, sideW, sideW);
-        g2.setFont(new Font("Arial", Font.BOLD, 12 * winScale));
         drawCenteredString(g2, "NEXT", sideX, nextBoxY + 20 * winScale, sideW);
 
-        // TÍNH TOÁN CĂN GIỮA KHỐI NEXT
         int minX = 4, maxX = 0, minY = 4, maxY = 0;
         for (int[] p : nextShape) {
-            if (p[0] < minX) minX = p[0];
-            if (p[0] > maxX) maxX = p[0];
-            if (p[1] < minY) minY = p[1];
-            if (p[1] > maxY) maxY = p[1];
+            if (p[0] < minX) minX = p[0]; if (p[0] > maxX) maxX = p[0];
+            if (p[1] < minY) minY = p[1]; if (p[1] > maxY) maxY = p[1];
         }
         int shapeW = (maxX - minX + 1) * brickSize * winScale;
         int shapeH = (maxY - minY + 1) * brickSize * winScale;
-        
-        // Tọa độ bắt đầu để khối nằm giữa ô vuông NEXT
-        int startX = sideX + (sideW - shapeW) / 2 - (minX * brickSize * winScale);
-        int startY = nextBoxY + 25 * winScale + (sideW - 25 * winScale - shapeH) / 2 - (minY * brickSize * winScale);
+        int nX = sideX + (sideW - shapeW) / 2 - (minX * brickSize * winScale);
+        int nY = nextBoxY + 25 * winScale + (sideW - 25 * winScale - shapeH) / 2 - (minY * brickSize * winScale);
 
         for (int[] p : nextShape) {
-            int dx = startX + (p[0] * brickSize * winScale);
-            int dy = startY + (p[1] * brickSize * winScale);
-            if (brickTexture[nextType % 6] != null) {
-                g2.drawImage(brickTexture[nextType % 6], dx, dy, brickSize * winScale, brickSize * winScale, null);
-            }
+            if (brickTexture[nextType % 6] != null)
+                g2.drawImage(brickTexture[nextType % 6], nX + p[0]*brickSize*winScale, nY + p[1]*brickSize*winScale, brickSize*winScale, brickSize*winScale, null);
         }
 
         if (isGameOver) {
@@ -144,12 +153,7 @@ public class GamePanel extends JPanel implements Runnable {
         }
     }
 
-    private void drawCenteredString(Graphics2D g2, String text, int x, int y, int width) {
-        FontMetrics metrics = g2.getFontMetrics();
-        int labelX = x + (width - metrics.stringWidth(text)) / 2;
-        g2.drawString(text, labelX, y);
-    }
-
+    // ---[ HÀM VẼ GẠCH VÀ HÀM PHỤ TRỢ ]---
     private void drawPerfectBrick(Graphics2D g2, int x, int y, int texIdx) {
         if (brickTexture[texIdx] != null) {
             g2.drawImage(brickTexture[texIdx], x * winScale, y * winScale, brickSize * winScale, brickSize * winScale, null);
@@ -158,17 +162,23 @@ public class GamePanel extends JPanel implements Runnable {
         }
     }
 
-    // ---[LOGIC GIỮ NGUYÊN ĐỂ TƯƠNG THÍCH]---
+    private void drawCenteredString(Graphics2D g2, String text, int x, int y, int width) {
+        FontMetrics m = g2.getFontMetrics();
+        g2.drawString(text, x + (width - m.stringWidth(text)) / 2, y);
+    }
+
     private void loadTexture() {
         String[] names = {"Purple", "Red", "Orange", "Yellow", "Green", "Cyan"};
         try { for (int i = 0; i < names.length; i++) brickTexture[i] = ImageIO.read(new File("resources/textures/bricks/" + names[i] + " Brick.png")); }
         catch (Exception e) { System.out.println("Texture error"); }
     }
+
     private void spawnBrick() {
         currentType = nextType; currentShape = nextShape; currentX = brickSize * 5; currentY = 0;
         nextType = rand.nextInt(SHAPES.length); nextShape = SHAPES[nextType];
         if (!canMove(currentX, currentY, currentShape)) isGameOver = true;
     }
+
     private boolean canMove(int nX, int nY, int[][] s) {
         for (int[] p : s) {
             int tX = (nX / brickSize) + p[0], tY = (nY / brickSize) + p[1];
@@ -177,17 +187,20 @@ public class GamePanel extends JPanel implements Runnable {
         }
         return true;
     }
+
     private void rotateShape() {
         int[][] r = new int[4][2];
         for (int i = 0; i < 4; i++) { r[i][0] = 2 - currentShape[i][1]; r[i][1] = currentShape[i][0]; }
         if (canMove(currentX, currentY, r)) currentShape = r;
     }
+
     private void lockToGrid() {
         for (int[] p : currentShape) {
             int gX = (currentX / brickSize) + p[0], gY = (currentY / brickSize) + p[1];
             if (gY >= 0 && gY < rows) brickboard[gY][gX] = (currentType % 6) + 1;
         }
     }
+
     private void checkForFullRow() {
         int lines = 0;
         for (int r = rows - 1; r >= 0; r--) {
@@ -197,8 +210,11 @@ public class GamePanel extends JPanel implements Runnable {
         }
         if (lines == 1) score += 100; else if (lines == 2) score += 300; else if (lines == 3) score += 500; else if (lines >= 4) score += 800;
     }
+
     private void restartGame() { brickboard = new int[rows][cols]; score = 0; isGameOver = false; spawnBrick(); }
+
     public void startGameThread() { gameThread = new Thread(this); gameThread.start(); }
+
     private int fallDelay = 40, fastFallDelay = 5; private boolean isFastFalling = false;
     @Override
     public void run() {
