@@ -10,9 +10,8 @@ public class GamePanel extends JPanel implements Runnable {
     private final int rows = 21; 
     private final int brickSize = 13;
 
-    // ---[Hệ thống Điểm số]---
     private int score = 0;
-    private Font gameFont = new Font("Arial", Font.BOLD, 18);
+    private boolean isGameOver = false; // Biến kiểm tra trạng thái kết thúc
 
     private int fallDelay = 40; 
     private int fastFallDelay = 5; 
@@ -45,7 +44,7 @@ public class GamePanel extends JPanel implements Runnable {
 
     public GamePanel(int winScale) {
         this.winScale = winScale;
-        this.setPreferredSize(new Dimension(screenWidth * winScale, (screenHeight + 30) * winScale)); // Cộng thêm khoảng trống để hiện điểm
+        this.setPreferredSize(new Dimension(screenWidth * winScale, (screenHeight + 30) * winScale));
         this.setBackground(Color.BLACK);
         this.setDoubleBuffered(true);
         this.setFocusable(true);
@@ -57,15 +56,18 @@ public class GamePanel extends JPanel implements Runnable {
         this.addKeyListener(new java.awt.event.KeyAdapter() {
             @Override
             public void keyPressed(java.awt.event.KeyEvent e) {
+                if (isGameOver) {
+                    if (e.getKeyCode() == java.awt.event.KeyEvent.VK_ENTER) restartGame();
+                    return;
+                }
+                
                 if (e.getKeyCode() == java.awt.event.KeyEvent.VK_LEFT) {
                     if (canMove(currentX - brickSize, currentY, currentShape)) currentX -= brickSize;
                 }
                 if (e.getKeyCode() == java.awt.event.KeyEvent.VK_RIGHT) {
                     if (canMove(currentX + brickSize, currentY, currentShape)) currentX += brickSize;
                 }
-                if (e.getKeyCode() == java.awt.event.KeyEvent.VK_UP) {
-                    rotateShape();
-                }
+                if (e.getKeyCode() == java.awt.event.KeyEvent.VK_UP) rotateShape();
                 if (e.getKeyCode() == java.awt.event.KeyEvent.VK_DOWN) isFastFalling = true;
                 if (e.getKeyCode() == java.awt.event.KeyEvent.VK_ESCAPE) System.exit(0);
             }
@@ -74,6 +76,13 @@ public class GamePanel extends JPanel implements Runnable {
                 if (e.getKeyCode() == java.awt.event.KeyEvent.VK_DOWN) isFastFalling = false;
             }
         });
+    }
+
+    private void restartGame() {
+        brickboard = new int[rows][cols];
+        score = 0;
+        isGameOver = false;
+        spawnBrick();
     }
 
     private boolean canMove(int newX, int newY, int[][] shape) {
@@ -100,9 +109,10 @@ public class GamePanel extends JPanel implements Runnable {
         currentShape = SHAPES[currentType];
         currentX = brickSize * 5; 
         currentY = 0;
+        
+        // KIỂM TRA GAME OVER: Nếu không thể sinh khối mới -> Kết thúc
         if (!canMove(currentX, currentY, currentShape)) {
-            brickboard = new int[rows][cols];
-            score = 0; // Reset điểm khi thua
+            isGameOver = true;
         }
     }
 
@@ -124,19 +134,21 @@ public class GamePanel extends JPanel implements Runnable {
     public void run() {
         int count = 0;
         while(gameThread != null) {
-            background.updateAnimation();
-            int currentDelay = isFastFalling ? fastFallDelay : fallDelay;
-            if (count > currentDelay) {
-                if (canMove(currentX, currentY + brickSize, currentShape)) {
-                    currentY += brickSize;
-                } else {
-                    lockToGrid();
-                    checkForFullRow();
-                    spawnBrick();
+            if (!isGameOver) { // Chỉ cập nhật logic nếu chưa Game Over
+                background.updateAnimation();
+                int currentDelay = isFastFalling ? fastFallDelay : fallDelay;
+                if (count > currentDelay) {
+                    if (canMove(currentX, currentY + brickSize, currentShape)) {
+                        currentY += brickSize;
+                    } else {
+                        lockToGrid();
+                        checkForFullRow();
+                        spawnBrick();
+                    }
+                    count = 0;
                 }
-                count = 0;
+                count++;
             }
-            count++;
             repaint();
             try { Thread.sleep(16); } catch (Exception e) {}
         }
@@ -150,7 +162,6 @@ public class GamePanel extends JPanel implements Runnable {
         }
     }
 
-    // ---[LOGIC TÍNH ĐIỂM THEO QUY TẮC CỦA BẠN]---
     private void checkForFullRow() {
         int linesCleared = 0;
         for (int r = rows - 1; r >= 0; r--) {
@@ -163,8 +174,6 @@ public class GamePanel extends JPanel implements Runnable {
                 r++; 
             }
         }
-
-        // Áp dụng bảng điểm từ ảnh của bạn
         if (linesCleared == 1) score += 100;
         else if (linesCleared == 2) score += 300;
         else if (linesCleared == 3) score += 500;
@@ -176,23 +185,47 @@ public class GamePanel extends JPanel implements Runnable {
         super.paintComponent(g);
         Graphics2D g2 = (Graphics2D) g;
 
-        // Vẽ lưới nền
         background.drawGrid(g2, rows, cols, brickSize, winScale);
 
-        // Vẽ gạch cố định
         for (int r = 0; r < rows; r++) {
             for (int c = 0; c < cols; c++) {
                 if (brickboard[r][c] > 0) drawPerfectBrick(g2, c * brickSize, r * brickSize, brickboard[r][c] - 1);
             }
         }
 
-        // Vẽ gạch đang rơi
-        for (int[] p : currentShape) drawPerfectBrick(g2, currentX + (p[0] * brickSize), currentY + (p[1] * brickSize), currentType % 6);
+        if (!isGameOver) {
+            for (int[] p : currentShape) drawPerfectBrick(g2, currentX + (p[0] * brickSize), currentY + (p[1] * brickSize), currentType % 6);
+        }
 
-        // ---[VẼ BẢNG ĐIỂM]---
+        // VẼ ĐIỂM SỐ
         g2.setColor(Color.WHITE);
-        g2.setFont(new Font("Arial", Font.BOLD, 10 * winScale)); // Tự scale cỡ chữ theo cửa sổ
+        g2.setFont(new Font("Arial", Font.BOLD, 10 * winScale));
         g2.drawString("SCORE: " + score, 10 * winScale, (screenHeight + 20) * winScale);
+
+        // ---[HIỂN THỊ MÀN HÌNH GAME OVER]---
+        if (isGameOver) {
+            // Làm mờ màn hình bằng một lớp màu đen trong suốt
+            g2.setColor(new Color(0, 0, 0, 150));
+            g2.fillRect(0, 0, getWidth(), getHeight());
+
+            // Vẽ chữ GAME OVER
+            g2.setColor(Color.RED);
+            g2.setFont(new Font("Arial", Font.BOLD, 20 * winScale));
+            String msg = "GAME OVER";
+            
+            // Căn giữa chữ
+            FontMetrics metrics = g2.getFontMetrics();
+            int x = (getWidth() - metrics.stringWidth(msg)) / 2;
+            int y = getHeight() / 2;
+            g2.drawString(msg, x, y);
+
+            // Hướng dẫn chơi lại
+            g2.setColor(Color.WHITE);
+            g2.setFont(new Font("Arial", Font.PLAIN, 10 * winScale));
+            String restartMsg = "Press ENTER to Restart";
+            int rx = (getWidth() - g2.getFontMetrics().stringWidth(restartMsg)) / 2;
+            g2.drawString(restartMsg, rx, y + (25 * winScale));
+        }
     }
 
     private void drawPerfectBrick(Graphics2D g2, int x, int y, int texIdx) {
