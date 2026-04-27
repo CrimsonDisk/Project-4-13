@@ -5,11 +5,10 @@ import java.io.File;
 import javax.imageio.ImageIO;
 
 public class GamePanel extends JPanel implements Runnable {
-    
     private int winScale;
     private int cols = 13; 
     private int rows = 21; 
-    private int brickPixelHitBox = 13;
+    private final int brickPixelHitBox = 13; 
     
     private int setSpeedBase = 1;
     private int setSpeedFastFalling = 8;
@@ -25,7 +24,6 @@ public class GamePanel extends JPanel implements Runnable {
     private boolean isFastFalling = false;
     private java.util.Random rand = new java.util.Random();
 
-    
     private int currentX, currentY; 
     private int[][] currentShape;    
     private int currentType;         
@@ -40,7 +38,7 @@ public class GamePanel extends JPanel implements Runnable {
         {{1,0}, {2,0}, {0,1}, {1,1}}, 
         {{0,0}, {1,0}, {1,1}, {2,1}}, 
         {{0,0}, {0,1}, {1,1}, {2,1}}, 
-        {{2,0}, {0,1}, {1,1}, {2,1}}  
+        {{2,0}, {0,1}, {1,1}, {2,1}}, 
     };
 
     public GamePanel(int winScale) {
@@ -52,7 +50,7 @@ public class GamePanel extends JPanel implements Runnable {
 
         loadTexture();
         musicPlayer.playAudio("resources/music/Bad Apple!! (PJSK collab).wav");
-        spawnBrick(); 
+        spawnBrick();
 
         this.addKeyListener(new java.awt.event.KeyAdapter() {
             @Override
@@ -64,7 +62,7 @@ public class GamePanel extends JPanel implements Runnable {
                     if (canMove(currentX + brickPixelHitBox, currentY, currentShape)) currentX += brickPixelHitBox;
                 }
                 if (e.getKeyCode() == java.awt.event.KeyEvent.VK_UP) {
-                    rotateShape(); 
+                    rotateShape();
                 }
                 if (e.getKeyCode() == java.awt.event.KeyEvent.VK_DOWN) { isFastFalling = true; }
                 if (e.getKeyCode() == java.awt.event.KeyEvent.VK_ESCAPE) System.exit(0);
@@ -79,33 +77,37 @@ public class GamePanel extends JPanel implements Runnable {
     
     private boolean canMove(int newX, int newY, int[][] shape) {
         for (int[] p : shape) {
+            
             int targetX = (newX / brickPixelHitBox) + p[0];
-            int targetY = (newY / brickPixelHitBox) + p[1];
+            int targetY = (newY + brickPixelHitBox - 1) / brickPixelHitBox + p[1] - 1;
+            
             
             if (targetX < 0 || targetX >= cols || targetY >= rows) return false;
+            
             if (targetY >= 0 && brickboard[targetY][targetX] > 0) return false;
         }
         return true;
     }
 
-    
     private void rotateShape() {
         int[][] rotated = new int[4][2];
         for (int i = 0; i < 4; i++) {
             rotated[i][0] = 2 - currentShape[i][1];
             rotated[i][1] = currentShape[i][0];
         }
+        
         if (canMove(currentX, currentY, rotated)) currentShape = rotated;
     }
 
     private void spawnBrick() {
         currentType = rand.nextInt(SHAPES.length);
         currentShape = SHAPES[currentType];
-        currentX = brickPixelHitBox * 5;
+        currentX = brickPixelHitBox * 5; 
         currentY = 0;
+        
+        
         if (!canMove(currentX, currentY, currentShape)) {
-            
-            brickboard = new int[rows][cols];
+            brickboard = new int[rows][cols]; 
         }
     }
 
@@ -133,15 +135,12 @@ public class GamePanel extends JPanel implements Runnable {
             if (frameCounter >= movePixelByFrame) {
                 int speed = isFastFalling ? setSpeedFastFalling : setSpeedBase;
                 for (int i = 0; i < speed; i++) {
+                    
                     if (canMove(currentX, currentY + 1, currentShape)) {
                         currentY++;
                     } else {
                         
-                        for (int[] p : currentShape) {
-                            int bX = (currentX / brickPixelHitBox) + p[0];
-                            int bY = (currentY / brickPixelHitBox) + p[1];
-                            if (bY >= 0) brickboard[bY][bX] = (currentType % 6) + 1;
-                        }
+                        lockBlockToGrid();
                         checkForFullRow();
                         spawnBrick();
                         break;
@@ -151,6 +150,18 @@ public class GamePanel extends JPanel implements Runnable {
             }
             repaint();
             try { Thread.sleep(16); } catch (Exception e) {}
+        }
+    }
+
+    
+    private void lockBlockToGrid() {
+        for (int[] p : currentShape) {
+            int gridX = (currentX / brickPixelHitBox) + p[0];
+            int gridY = (currentY / brickPixelHitBox) + p[1];
+            
+            if (gridY >= 0 && gridY < rows && gridX >= 0 && gridX < cols) {
+                brickboard[gridY][gridX] = (currentType % 6) + 1;
+            }
         }
     }
 
@@ -190,6 +201,7 @@ public class GamePanel extends JPanel implements Runnable {
 
     private void drawBrick(Graphics2D g2, int x, int y, int texIdx) {
         if (brickTexture[texIdx] != null) {
+            
             g2.drawImage(brickTexture[texIdx], x * winScale, (y - 6) * winScale, brickPixelHitBox * winScale, (brickPixelHitBox + 6) * winScale, null);
         }
     }
