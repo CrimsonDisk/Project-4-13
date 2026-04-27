@@ -8,7 +8,7 @@ public class Main {
         
         int scale = Integer.parseInt(input);
 
-<<<<<<< HEAD
+
         JFrame frame = new JFrame("Mini 3D Tetris");
         GamePanel game = new GamePanel(scale);
         
@@ -18,7 +18,7 @@ public class Main {
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setLocationRelativeTo(null);
         frame.setVisible(true);
-=======
+
         //---[The window scaling]---
         String scaleInput = JOptionPane.showInputDialog("Choose your window scale, 2 is recommended.");
         int winScale = 2;
@@ -38,6 +38,6 @@ public class Main {
         newframe.pack();
         newframe.setLocationRelativeTo(null);
         newframe.setVisible(true);
->>>>>>> 039f0fe2c000e02611a996b18b19d882198aaea7
+
     }
 }
