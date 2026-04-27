@@ -9,9 +9,9 @@ import javax.sound.sampled.*;
 public class GamePanel extends JPanel implements Runnable {
     //---[Main window and scaling stuff]---
     private int winScale;
-    private int cols = 13;
+    private int cols = 7; //default is 13
     private int rows = 21;
-    private int startCol = 6;
+    private int startCol = 2; //default is 6
     private int brickPixelHitBox = 13;
     
     private int setSpeedBase = 1;
@@ -83,15 +83,33 @@ public class GamePanel extends JPanel implements Runnable {
         });
     }
 
-    //---[Full line check and pop]---
+    //---[Full line check and pop, god I ####ing hate this part]---
     private void checkForFullRow() {
-        for (int currentRow = rows - 1; currentRow >= 0; currentRow--) {
+        for (int currentRow = rows - 1; currentRow > 0; currentRow--) {
+            boolean rowIsFull = true;
+
             for (int currentCol = 0; currentCol < cols; currentCol++) {
-                
+                if (brickboard[currentRow][currentCol] == 0) {
+                    rowIsFull = false;
+                    break;
+                }
             }
+
+            if (rowIsFull) {
+                for (int currentCol = 0; currentCol < cols; currentCol++) {
+                    brickboard[currentRow][currentCol] = 0;
+                }
+
+
+            }
+
+
+
+
+
+
         }
     }
-
 
     //---[Loads brick textures]---
     private void loadTexture() {
@@ -130,6 +148,8 @@ public class GamePanel extends JPanel implements Runnable {
                     if (brickY < screenHeight - brickPixelHitBox && !isBrickBelow) { brickY++; }
                     else {
                         brickboard[gridY][gridX] = currentBrickIDColour;
+
+                        checkForFullRow();
 
                         brickY = 0;
                         brickX = brickPixelHitBox * startCol;
