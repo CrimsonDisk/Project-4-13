@@ -15,7 +15,7 @@ public class Bgm {
             musicClip = AudioSystem.getClip(); 
             musicClip.open(audioStream);
 
-            setVolume(-6.0f);
+            setVolume(-12.0f);
 
             musicClip.loop(Clip.LOOP_CONTINUOUSLY);
             musicClip.start();

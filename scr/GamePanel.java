@@ -36,6 +36,9 @@ public class GamePanel extends JPanel implements Runnable {
     private int currentBrickIDColour = 1;
     private java.util.Random rand = new java.util.Random();
 
+    private boolean isGameOver = false;
+    private int gameOverOption = 0;
+
     //---[Brick math, positions]---
     private int brickX = brickPixelHitBox * startCol;
     private int brickY = 0;
@@ -60,6 +63,22 @@ public class GamePanel extends JPanel implements Runnable {
         this.addKeyListener(new java.awt.event.KeyAdapter() {
             @Override
             public void keyPressed(java.awt.event.KeyEvent e) {
+
+                //Game Over control stuff
+                if (isGameOver) {
+                    if (e.getKeyCode() == java.awt.event.KeyEvent.VK_UP || e.getKeyCode() == java.awt.event.KeyEvent.VK_DOWN) {
+                        gameOverOption = (gameOverOption == 0) ? 1 : 0;
+                        sfxPlayer.playSFX("resources/sfx/MenuBleep.wav");
+                        repaint();
+                    }
+                    if (e.getKeyCode() == java.awt.event.KeyEvent.VK_ENTER) {
+                        sfxPlayer.playSFX("resources/sfx/MenuAccept.wav");
+                        if (gameOverOption == 0) { resetGame(); }
+                        else { System.exit(0); }
+                    }
+                    return;
+                }
+
                 if (e.getKeyCode() == java.awt.event.KeyEvent.VK_LEFT) {
                     if (isValidPosition(brickX - brickPixelHitBox, brickY, currentShape)) brickX -= brickPixelHitBox;
                 }
@@ -95,8 +114,22 @@ public class GamePanel extends JPanel implements Runnable {
         brickY = 0;
         brickX = brickPixelHitBox * startCol;
         currentBrickIDColour = rand.nextInt(6) + 1;
+
+        if (!isValidPosition(brickX, brickY, currentShape)) {
+            isGameOver = true;
+            sfxPlayer.playSFX("resources/sfx/forklift-certified.wav");
+        }
     }
 
+    private void resetGame() {
+        brickboard = new int[rows][cols];
+        ui.resetScore();
+        isGameOver = false;
+        gameOverOption = 0;
+        spawnNewShape();
+    }
+
+    //---[Rotation kick stuff, to prevent crashes]---
     private void rotate(boolean clockwise) {
         int[][] rotated = Shapes.rotate(currentShape, clockwise);
         int[] kicks = {0, -brickPixelHitBox, brickPixelHitBox, -brickPixelHitBox * 2, brickPixelHitBox * 2};
@@ -109,6 +142,7 @@ public class GamePanel extends JPanel implements Runnable {
         }
     }
 
+    //---Position check stuff]---
     private boolean isValidPosition(int x, int y, int[][] shape) {
         for (int r = 0; r < shape.length; r++) {
             for (int c = 0; c < shape[r].length; c++) {
@@ -161,38 +195,40 @@ public class GamePanel extends JPanel implements Runnable {
     @Override
     public void run() {
         while(true) {
-            background.updateAnimation();
-            frameCounter++;
+            if (!isGameOver) {
+                background.updateAnimation();
+                frameCounter++;
 
-            if (frameCounter >= movePixelByFrame) {
-                int currentSpeed = (isFastFalling) ? setSpeedFastFalling : setSpeedBase;
-                
-                for (int i = 0; i < currentSpeed; i++) {
-                    if (brickY % brickPixelHitBox == 0) {
-                        if (!isValidPosition(brickX, brickY + brickPixelHitBox, currentShape)) {
-                            for (int r = 0; r < currentShape.length; r++) {
-                                for (int c = 0; c < currentShape[r].length; c++) {
-                                    if (currentShape[r][c] == 1) {
-                                        int gridY = (brickY / brickPixelHitBox) + r;
-                                        int gridX = (brickX / brickPixelHitBox) + c;
+                if (frameCounter >= movePixelByFrame) {
+                    int currentSpeed = (isFastFalling) ? setSpeedFastFalling : setSpeedBase;
+                    
+                    for (int i = 0; i < currentSpeed; i++) {
+                        if (brickY % brickPixelHitBox == 0) {
+                            if (!isValidPosition(brickX, brickY + brickPixelHitBox, currentShape)) {
+                                for (int r = 0; r < currentShape.length; r++) {
+                                    for (int c = 0; c < currentShape[r].length; c++) {
+                                        if (currentShape[r][c] == 1) {
+                                            int gridY = (brickY / brickPixelHitBox) + r;
+                                            int gridX = (brickX / brickPixelHitBox) + c;
 
-                                        if (gridY >= 0 && gridY < rows && gridX >= 0 && gridX < cols) {
-                                            brickboard[gridY][gridX] = currentBrickIDColour;
+                                            if (gridY >= 0 && gridY < rows && gridX >= 0 && gridX < cols) {
+                                                brickboard[gridY][gridX] = currentBrickIDColour;
+                                            }
                                         }
                                     }
                                 }
+                                checkForFullRow();
+                                sfxPlayer.playSFX("resources/sfx/MightyUnspin.wav");
+                                spawnNewShape();
+                                isFastFalling = false;
+                                ui.repaint(); 
+                                break;
                             }
-                            checkForFullRow();
-                            sfxPlayer.playSFX("resources/sfx/MightyUnspin.wav");
-                            spawnNewShape();
-                            isFastFalling = false;
-                            ui.repaint(); 
-                            break;
                         }
+                        brickY++;
                     }
-                    brickY++;
+                    frameCounter = 0;
                 }
-                frameCounter = 0;
             }
             repaint();
             try { Thread.sleep(16); } catch (Exception e) {}
@@ -288,6 +324,39 @@ public class GamePanel extends JPanel implements Runnable {
                     }
                 }
             }
+        }
+
+        // ---[The brand new Game Over overlay]---
+        if (isGameOver) {
+            g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.7f));
+            g2.setColor(Color.BLACK);
+            g2.fillRect(0, 0, getWidth(), getHeight());
+            g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1.0f));
+
+
+            int rectW = 100 * winScale;
+            int rectH = 60 * winScale;
+            int rectX = (getWidth() - rectW) / 2;
+            int rectY = (getHeight() - rectH) / 2;
+
+
+            g2.setColor(new Color(40, 40, 40));
+            g2.fillRect(rectX, rectY, rectW, rectH);
+            g2.setColor(Color.WHITE);
+            g2.drawRect(rectX, rectY, rectW, rectH);
+
+
+            g2.setFont(new Font("Arial", Font.BOLD, 12 * winScale));
+            g2.drawString("GAME OVER", rectX + 15 * winScale, rectY + 20 * winScale);
+
+            g2.setFont(new Font("Arial", Font.BOLD, 10 * winScale));
+            
+
+            g2.setColor(gameOverOption == 0 ? Color.RED : Color.WHITE);
+            g2.drawString("RETRY", rectX + 30 * winScale, rectY + 40 * winScale);
+
+            g2.setColor(gameOverOption == 1 ? Color.RED : Color.WHITE);
+            g2.drawString("EXIT", rectX + 30 * winScale, rectY + 52 * winScale);
         }
     }
 }

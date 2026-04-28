@@ -25,6 +25,10 @@ public class Ui extends JPanel {
         this.score += points;
     }
 
+    public void resetScore () {
+        this.score = 0;
+    }
+
     public void setNextShape(int[][] shape) {
         this.nextShape = shape;
     }
