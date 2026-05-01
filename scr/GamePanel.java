@@ -12,11 +12,8 @@ public class GamePanel extends JPanel implements Runnable {
     public static final int rows = 21; 
     private int startCol = 5; 
     public static final int brickPixelHitBox = 13;
-
     public static final int verticBrickPercent = 30;
-
     private float previewPieceTransparency = 0.3f;
-
     public static final int previewNextPiecePositionY = 170;
     
     private int setSpeedBase = 1;
@@ -37,7 +34,6 @@ public class GamePanel extends JPanel implements Runnable {
     private int nextBrickIDColour = 1;
     private int nextSpecialBlockIndex = -1;
 
-
     public static final int numberOfBricks = 6;
     private int specialBlockIndex = -1;
 
@@ -46,11 +42,9 @@ public class GamePanel extends JPanel implements Runnable {
     private java.util.Random rand = new java.util.Random();
 
     private boolean isGameOver = false;
+    private boolean historyShown = false; // BIẾN MỚI: Để kiểm soát việc hiện bảng lịch sử
     private int gameOverOption = 0;
 
-    //---[]---
-
-    //---[Brick math, positions]---
     private int brickX = brickPixelHitBox * startCol;
     private int brickY = 0;
     private int frameCounter = 0;
@@ -74,8 +68,6 @@ public class GamePanel extends JPanel implements Runnable {
         this.addKeyListener(new java.awt.event.KeyAdapter() {
             @Override
             public void keyPressed(java.awt.event.KeyEvent e) {
-
-                //Game Over control stuff
                 if (isGameOver) {
                     if (e.getKeyCode() == java.awt.event.KeyEvent.VK_UP || e.getKeyCode() == java.awt.event.KeyEvent.VK_DOWN) {
                         gameOverOption = (gameOverOption == 0) ? 1 : 0;
@@ -104,7 +96,6 @@ public class GamePanel extends JPanel implements Runnable {
                     rotate(true);
                     sfxPlayer.playSFX("resources/sfx/Land.wav");
                 }
-
                 if (e.getKeyCode() == java.awt.event.KeyEvent.VK_ESCAPE) { System.exit(0); }
                 if (e.getKeyCode() == java.awt.event.KeyEvent.VK_DOWN) { isFastFalling = true; }
             }
@@ -115,33 +106,39 @@ public class GamePanel extends JPanel implements Runnable {
         });
     }
 
-    //---[The shape spawn thing]---
     private void spawnNewShape() {
-
-        // Creates the next shape of bricks
         if (nextShape == null) {
             nextShape = Shapes.getRandomShape();
             nextBrickIDColour = rand.nextInt(numberOfBricks) + 1;
             nextSpecialBlockIndex = (rand.nextInt(100) < verticBrickPercent) ? rand.nextInt(4) : -1;
         }
-        // Movin' next to current
         currentShape = nextShape;
         currentBrickIDColour = nextBrickIDColour;
         specialBlockIndex = nextSpecialBlockIndex;
-        // We do the exact same thingy again, as the old "Next" shapw thingy becomes current, we make a new "Next", yippe.
+        
         nextShape = Shapes.getRandomShape();
         nextBrickIDColour = rand.nextInt(numberOfBricks) + 1;
         nextSpecialBlockIndex = (rand.nextInt(100) < verticBrickPercent) ? rand.nextInt(4) : -1;
 
         ui.setNextShapeData(nextShape, nextBrickIDColour, nextSpecialBlockIndex);
 
-        //Bring the falling bricks back to its starting point, simple (but it took me a lot of time to realise that the falling brick, once it collides, make a clone of itself, and the falling brick returns to its starting point under a new appearance).
         brickY = 0;
         brickX = brickPixelHitBox * startCol;
 
         if (!isValidPosition(brickX, brickY, currentShape)) {
             isGameOver = true;
             sfxPlayer.playSFX("resources/sfx/forklift-certified.wav");
+            
+            // KÍCH HOẠT MÀN HÌNH LỊCH SỬ TẠI ĐÂY
+            if (!historyShown) {
+                historyShown = true;
+                SwingUtilities.invokeLater(() -> {
+                    JFrame parent = (JFrame) SwingUtilities.getWindowAncestor(this);
+                    // Lấy điểm hiện tại từ đối tượng ui của bạn
+                    GameOverHistory historyUI = new GameOverHistory(parent, ui.getScore());
+                    historyUI.setVisible(true);
+                });
+            }
         }
     }
 
@@ -149,11 +146,11 @@ public class GamePanel extends JPanel implements Runnable {
         brickboard = new int[rows][cols];
         ui.resetScore();
         isGameOver = false;
+        historyShown = false; // RESET biến cờ khi chơi lại
         gameOverOption = 0;
         spawnNewShape();
     }
 
-    //---[Rotation kick stuff, to prevent crashes]---
     private void rotate(boolean clockwise) {
         int[][] rotated = Shapes.rotate(currentShape, clockwise);
         int[] kicks = {0, -brickPixelHitBox, brickPixelHitBox, -brickPixelHitBox * 2, brickPixelHitBox * 2};
@@ -166,18 +163,13 @@ public class GamePanel extends JPanel implements Runnable {
         }
     }
 
-    //---[Position check stuff]---
     private boolean isValidPosition(int x, int y, int[][] shape) {
         for (int r = 0; r < shape.length; r++) {
             for (int c = 0; c < shape[r].length; c++) {
                 if (shape[r][c] == 1) {
                     int targetX = (x / brickPixelHitBox) + c;
                     int targetY = (y / brickPixelHitBox) + r;
-
-                    // Wall boundaries
                     if (targetX < 0 || targetX >= cols || targetY >= rows) return false;
-                    
-                    // Collision with placed bricks
                     if (targetY >= 0 && brickboard[targetY][targetX] > 0) return false;
                 }
             }
@@ -185,20 +177,16 @@ public class GamePanel extends JPanel implements Runnable {
         return true;
     }
 
-    //---[The bomb activation stuff]---
     private void triggerBomb(int col) {
         int bombID = 7;
-        
-        // Offset thingy (x - 1, x, and x + 1) for blast radius
         for (int offSet = -1; offSet <= 1; offSet++) {
             int targetCols = col + offSet; 
-
             if (targetCols >= 0 && targetCols < cols) {
                 for (int r = 0; r < rows; r++) {
                     if (brickboard[r][targetCols] != 0) {
                         if (brickboard[r][targetCols] == bombID) {
-                            brickboard[r][targetCols] = 0; // Remove the current found bomb to prevent infinite loops
-                            triggerBomb(targetCols); //I didn't know there is a concept called Recursion, by triggering the code itself again before the column clear, it creates 2 tasks! WHAT?
+                            brickboard[r][targetCols] = 0;
+                            triggerBomb(targetCols);
                         } else {
                             ui.updateScore(1);
                             brickboard[r][targetCols] = 0;
@@ -210,10 +198,8 @@ public class GamePanel extends JPanel implements Runnable {
         sfxPlayer.playSFX("resources/sfx/SpiderBounce1.wav");
     }
 
-    //---[This is the popping mechanic I think, there's so much now I'm confused]
     private void checkForFullRow() {
         int bombID = 7;
-
         for (int currentRow = rows - 1; currentRow > 0; currentRow--) {
             boolean rowIsFull = true;
             for (int currentCol = 0; currentCol < cols; currentCol++) {
@@ -223,15 +209,11 @@ public class GamePanel extends JPanel implements Runnable {
                 }
             }
             if (rowIsFull) {
-                // Look for bombs in the full row
                 for (int currentCol = 0; currentCol < cols; currentCol++) {
                     if (brickboard[currentRow][currentCol] == bombID) {
-                        // Found a bomb, yes Rico, kaboom.
                         triggerBomb(currentCol); 
                     }
                 }
-
-                // Standard row clear behavior (if no bomb was hit, or after bomb yay)
                 ui.updateScore(10); 
                 for (int r = currentRow; r > 0; r--) {
                     for (int c = 0; c < cols; c++) {
@@ -260,26 +242,20 @@ public class GamePanel extends JPanel implements Runnable {
             if (!isGameOver) {
                 background.updateAnimation();
                 frameCounter++;
-
                 if (frameCounter >= movePixelByFrame) {
                     int currentSpeed = (isFastFalling) ? setSpeedFastFalling : setSpeedBase;
-                    
                     for (int i = 0; i < currentSpeed; i++) {
                         if (brickY % brickPixelHitBox == 0) {
                             if (!isValidPosition(brickX, brickY + brickPixelHitBox, currentShape)) {
                                 int landedBlockCount = 0;
-
                                 for (int r = currentShape.length - 1; r >= 0; r--) {
                                     for (int c = 0; c < currentShape[r].length; c++) {
                                         if (currentShape[r][c] == 1) {
                                             int gridY = (brickY / brickPixelHitBox) + r;
                                             int gridX = (brickX / brickPixelHitBox) + c;
-
                                             if (gridY >= 0 && gridY < rows && gridX >= 0 && gridX < cols) {
-                                                if (landedBlockCount == specialBlockIndex) {
-                                                    brickboard[gridY][gridX] = numberOfBricks + 1;
-                                                }
-                                                else { brickboard[gridY][gridX] = currentBrickIDColour; }
+                                                if (landedBlockCount == specialBlockIndex) brickboard[gridY][gridX] = numberOfBricks + 1;
+                                                else brickboard[gridY][gridX] = currentBrickIDColour;
                                             }
                                             landedBlockCount++;
                                         }
@@ -303,21 +279,14 @@ public class GamePanel extends JPanel implements Runnable {
         }
     }
 
-    //---[A check for collision for the preview brick, this is a lot of code, I start to get confused now. Basically this code goes down until it hits an object.]---
     private boolean checkCollision(int x, int y, int[][] shape) {
         for (int r = 0; r < shape.length; r++) {
             for (int c = 0; c < shape[r].length; c++) {
                 if (shape[r][c] == 1) {
                     int boardX = (x / brickPixelHitBox) + c;
                     int boardY = (y / brickPixelHitBox) + r;
-
-                    // Check for bottom floor boundary
                     if (boardY >= rows) return true;
-
-                    // Check for wall boundaries
                     if (boardX < 0 || boardX >= cols) return true;
-
-                    // Check for collision with existing bricks on board
                     if (boardY >= 0 && brickboard[boardY][boardX] > 0) return true;
                 }
             }
@@ -325,17 +294,14 @@ public class GamePanel extends JPanel implements Runnable {
         return false;
     }
 
-    //---[The brick preview]---
     private int getLandingY() {
         int snappedGhostGridPositionY = (brickY / brickPixelHitBox) * brickPixelHitBox;
         int ghostY = snappedGhostGridPositionY;
-        // Increase by the size of one brick until a collision is found, then we get the supposed landing position, I think.
         while (!checkCollision(brickX, ghostY + brickPixelHitBox, currentShape)) {
             ghostY += brickPixelHitBox;
         }
         return ghostY;
     }
-
 
     @Override
     protected void paintComponent(Graphics g) {
@@ -359,78 +325,56 @@ public class GamePanel extends JPanel implements Runnable {
         if (currentShape != null) {
             int landingY = getLandingY();
             Composite originalComposite = g2.getComposite();
-
-            // Set transparency for faker pieces
             g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, previewPieceTransparency));
             int fakerBlockCount = 0;
             for (int r = currentShape.length - 1; r >= 0; r--) {
                 for (int c = 0; c < currentShape[r].length; c++) {  
                     if (currentShape[r][c] == 1) {
                         int textureIndex = (fakerBlockCount == specialBlockIndex) ? 6 : (currentBrickIDColour - 1);
-
                         int drawX = (brickX + (c * brickPixelHitBox)) * winScale;
                         int drawY = (landingY + (r * brickPixelHitBox) - 6) * winScale;
-
                         g2.drawImage(brickTexture[textureIndex], drawX, drawY, brickPixelHitBox * winScale, (brickPixelHitBox + 6) * winScale, null);
-
                         fakerBlockCount++;
                     }
                 }
             }
-            
-            // Here will reset transparency to draw the REAL piece normally
             g2.setComposite(originalComposite);
-
-            //---[The falling shapes part]---
             int fallingBlockCount = 0;
             for (int r = currentShape.length - 1; r >= 0; r--) {
                 for (int c = 0; c < currentShape[r].length; c++) {
                     if (currentShape[r][c] == 1) {
                         int textureIndex = (fallingBlockCount == specialBlockIndex) ? 6 : (currentBrickIDColour - 1);
-
                         int drawX = (brickX + (c * brickPixelHitBox)) * winScale;
                         int drawY = (brickY + (r * brickPixelHitBox) - 6) * winScale;
-
-                        g2.drawImage(brickTexture[textureIndex], 
-                            drawX, drawY, 
-                            brickPixelHitBox * winScale, 
-                            (brickPixelHitBox + 6) * winScale, 
-                            null);
+                        g2.drawImage(brickTexture[textureIndex], drawX, drawY, brickPixelHitBox * winScale, (brickPixelHitBox + 6) * winScale, null);
                         fallingBlockCount++;
                     }
                 }
             }
         }
 
-        // ---[The brand new Game Over overlay]---
         if (isGameOver) {
             g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.7f));
             g2.setColor(Color.BLACK);
             g2.fillRect(0, 0, getWidth(), getHeight());
             g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1.0f));
 
-
             int rectW = 100 * winScale;
             int rectH = 60 * winScale;
             int rectX = (getWidth() - rectW) / 2;
             int rectY = (getHeight() - rectH) / 2;
-
 
             g2.setColor(new Color(40, 40, 40));
             g2.fillRect(rectX, rectY, rectW, rectH);
             g2.setColor(Color.WHITE);
             g2.drawRect(rectX, rectY, rectW, rectH);
 
-
             g2.setFont(new Font("Arial", Font.BOLD, 12 * winScale));
             g2.drawString("GAME OVER", rectX + 15 * winScale, rectY + 20 * winScale);
 
             g2.setFont(new Font("Arial", Font.BOLD, 10 * winScale));
-            
-
             g2.setColor(gameOverOption == 0 ? Color.RED : Color.WHITE);
             g2.drawString("RETRY", rectX + 30 * winScale, rectY + 40 * winScale);
-
             g2.setColor(gameOverOption == 1 ? Color.RED : Color.WHITE);
             g2.drawString("EXIT", rectX + 30 * winScale, rectY + 52 * winScale);
         }

@@ -38,6 +38,12 @@ public class Ui extends JPanel {
         this.score = 0;
     }
 
+    // --- HÀM MỚI ĐƯỢC THÊM VÀO THEO ĐỀ XUẤT ---
+    public int getScore() {
+        return this.score; // Trả về điểm số hiện tại để hiển thị trong lịch sử
+    }
+    // -----------------------------------------
+
     public void setNextShape(int[][] shape) {
         this.nextShape = shape;
     }
