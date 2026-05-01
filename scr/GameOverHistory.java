@@ -8,7 +8,8 @@ public class GameOverHistory extends JDialog {
     private JList<String> historyList;
 
     public GameOverHistory(JFrame parent, int finalScore) {
-        super(parent, "Lịch sử chơi game", true);
+        // 1. Đổi tiêu đề cửa sổ thành GAMEPLAY HISTORY
+        super(parent, "GAMEPLAY HISTORY", true);
         setSize(600, 400);
         setLocationRelativeTo(parent);
         setLayout(null);
@@ -22,7 +23,8 @@ public class GameOverHistory extends JDialog {
         txtName.setBounds(130, 40, 150, 25);
         add(txtName);
 
-        JLabel lblScore = new JLabel("Amount (Score)");
+        // 2. Đổi nhãn thành "Score" (Xóa Amount và bỏ ngoặc)
+        JLabel lblScore = new JLabel("Score");
         lblScore.setBounds(30, 80, 100, 25);
         add(lblScore);
 
@@ -31,6 +33,7 @@ public class GameOverHistory extends JDialog {
         txtScore.setEditable(false);
         add(txtScore);
 
+        // Các nút bấm giữ nguyên chức năng
         JButton btnAdd = new JButton("Add");
         btnAdd.setBounds(130, 280, 70, 30);
         add(btnAdd);
@@ -40,10 +43,7 @@ public class GameOverHistory extends JDialog {
         add(btnRemove);
 
         // --- CỘT PHẢI (Danh sách) ---
-        JLabel lblList = new JLabel("Product List");
-        lblList.setFont(new Font("Arial", Font.BOLD, 20));
-        lblList.setBounds(330, 30, 200, 30);
-        add(lblList);
+        // 3. Đã xóa phần code hiển thị nhãn "Product List" ở đây
 
         listModel = new DefaultListModel<>();
         historyList = new JList<>(listModel);
@@ -51,19 +51,24 @@ public class GameOverHistory extends JDialog {
         scrollPane.setBounds(330, 70, 220, 240);
         add(scrollPane);
 
-        // Xử lý nút Add
+        // Xử lý sự kiện lưu điểm
         btnAdd.addActionListener(e -> {
             String name = txtName.getText().trim();
             if (!name.isEmpty()) {
-                listModel.addElement(listModel.size() + 1 + ". " + name + "  " + finalScore);
+                // Định dạng hiển thị trong danh sách
+                listModel.addElement(listModel.size() + 1 + ". " + name + "  -  " + finalScore);
                 txtName.setText("");
+            } else {
+                JOptionPane.showMessageDialog(this, "Please enter a name!");
             }
         });
 
-        // Xử lý nút Remove
+        // Xử lý sự kiện xóa dòng được chọn
         btnRemove.addActionListener(e -> {
             int selected = historyList.getSelectedIndex();
-            if (selected != -1) listModel.remove(selected);
+            if (selected != -1) {
+                listModel.remove(selected);
+            }
         });
     }
 }
