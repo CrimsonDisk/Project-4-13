@@ -5,7 +5,7 @@ import javax.imageio.ImageIO;
 import javax.swing.*;
 
 public class GamePanel extends JPanel implements Runnable {
-    //---[Cấu hình hệ thống gốc]---
+    //---[]---
     private Ui ui; 
     private int winScale;
     public static final int cols = 13; 
@@ -48,16 +48,14 @@ public class GamePanel extends JPanel implements Runnable {
     private int frameCounter = 0;
     private BufferedImage[] brickTexture = new BufferedImage[numberOfBricks + 2];
     
-    // --- BIẾN BORDER & BACKGROUND ---
     private BufferedImage bgImage; 
     private BufferedImage[] borderImgs = new BufferedImage[8];
-    private final int borderSize = 16; // Độ dày viền bao quanh (pixel gốc)
+    private final int borderSize = 16;
 
     public GamePanel(int winScale, Ui ui) {
         this.winScale = winScale;
         this.ui = ui;
-        
-        // Mở rộng Panel để chứa Grid + Border 2 bên
+
         int totalWidth = (screenWidth + (borderSize * 2)) * winScale;
         int totalHeight = (screenHeight + (borderSize * 2)) * winScale;
         
@@ -83,7 +81,6 @@ public class GamePanel extends JPanel implements Runnable {
             }
             bgImage = ImageIO.read(new File("resources/textures/backgrounds/bg_game.png"));
 
-            // Load 8 mảnh viền theo tên file trong VS Code của bạn
             borderImgs[0] = ImageIO.read(new File("resources/textures/gui/border/topleft.png"));
             borderImgs[1] = ImageIO.read(new File("resources/textures/gui/border/topright.png"));
             borderImgs[2] = ImageIO.read(new File("resources/textures/gui/border/lowerleft.png"));
@@ -101,12 +98,11 @@ public class GamePanel extends JPanel implements Runnable {
         int w = getWidth();
         int h = getHeight();
 
-        // Vẽ 4 cạnh
         g2.drawImage(borderImgs[4], s, 0, w - (2 * s), s, null);      // Top
         g2.drawImage(borderImgs[5], s, h - s, w - (2 * s), s, null);  // Bottom
         g2.drawImage(borderImgs[6], 0, s, s, h - (2 * s), null);      // Left
         g2.drawImage(borderImgs[7], w - s, s, s, h - (2 * s), null);  // Right
-        // Vẽ 4 góc
+
         g2.drawImage(borderImgs[0], 0, 0, s, s, null);
         g2.drawImage(borderImgs[1], w - s, 0, s, s, null);
         g2.drawImage(borderImgs[2], 0, h - s, s, s, null);
@@ -119,16 +115,13 @@ public class GamePanel extends JPanel implements Runnable {
         Graphics2D g2 = (Graphics2D) g;
         int offset = borderSize * winScale;
 
-        // 1. Vẽ hình nền cây dừa lọt lòng trong Border
         if (bgImage != null) {
             g2.drawImage(bgImage, offset, offset, screenWidth * winScale, screenHeight * winScale, null);
         }
 
-        // 2. Dịch chuyển để vẽ các tính năng game gốc
         g2.translate(offset, offset);
         background.drawGrid(g2, rows, cols, brickPixelHitBox, winScale);
 
-        // Vẽ các khối đã đặt
         for (int r = rows - 1; r >= 0; r--) {
             for (int c = 0; c < cols; c++) {
                 if (brickboard[r][c] > 0) {
@@ -139,7 +132,6 @@ public class GamePanel extends JPanel implements Runnable {
             }
         }
 
-        // Vẽ piece đang rơi và preview (logic gốc)
         if (currentShape != null) {
             int landingY = getLandingY();
             Composite originalComp = g2.getComposite();
@@ -149,17 +141,14 @@ public class GamePanel extends JPanel implements Runnable {
             drawPiece(g2, currentShape, brickX, brickY);
         }
 
-        // 3. Reset tọa độ và vẽ Border đè lên trên cùng
         g2.translate(-offset, -offset);
         drawBorder(g2);
 
-        // 4. Game Over Overlay (Logic gốc)
         if (isGameOver) {
             drawGameOverOverlay(g2);
         }
     }
 
-    // --- CÁC HÀM LOGIC GỐC (KHÔNG THAY ĐỔI) ---
     private void drawPiece(Graphics2D g2, int[][] shape, int x, int y) {
         int blockCount = 0;
         for (int r = shape.length - 1; r >= 0; r--) {
@@ -299,6 +288,7 @@ public class GamePanel extends JPanel implements Runnable {
                     return;
                 }
                 int k = e.getKeyCode();
+                if (k == java.awt.event.KeyEvent.VK_ESCAPE) System.exit(0);
                 if (k == 37 && isValidPosition(brickX - brickPixelHitBox, brickY, currentShape)) brickX -= brickPixelHitBox;
                 if (k == 39 && isValidPosition(brickX + brickPixelHitBox, brickY, currentShape)) brickX += brickPixelHitBox;
                 if (k == 81) rotate(false); if (k == 69) rotate(true);

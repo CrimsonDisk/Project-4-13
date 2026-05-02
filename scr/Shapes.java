@@ -114,7 +114,7 @@ public class Shapes {
     }
 
     public static int[][] rotate(int[][] matrix, boolean clockwise) {
-        int n = 3;
+        int n = matrix.length;
         int[][] result = new int[n][n];
 
         for (int row = 0; row < n; row++) {

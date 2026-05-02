@@ -26,8 +26,8 @@ public class Ui extends JPanel {
         } catch (Exception e) { System.out.println("Sidebar BG Error"); }
 
         int gameWidth = GamePanel.cols * GamePanel.brickPixelHitBox * winScale; 
-        int borderPadding = 16 * 2 * winScale; // 16px viền trái + 16px viền phải
-        int sidebarWidth = 8 * GamePanel.brickPixelHitBox * winScale;
+        int borderPadding = 16 * 2 * winScale;
+        int sidebarWidth = 12 * GamePanel.brickPixelHitBox * winScale;
         int totalHeight = (GamePanel.rows * GamePanel.brickPixelHitBox + (16 * 2)) * winScale;
 
         this.setPreferredSize(new Dimension(gameWidth + borderPadding + sidebarWidth, totalHeight));
@@ -54,7 +54,6 @@ public class Ui extends JPanel {
         super.paintComponent(g);
         Graphics2D g2 = (Graphics2D) g;
 
-        // Bắt đầu sidebar ngay sau cái GamePanel (đã bao gồm viền gỗ)
         int sidebarX = gamePanel.getPreferredSize().width;
         int sidebarWidth = getWidth() - sidebarX;
 
