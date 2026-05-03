@@ -24,7 +24,7 @@ It's a Tetris game, but with a new mechanic to be less generic.
 
 **Gameplay:** Classic Tetris-ish, fill a full row to gain score and keep the game running.
 
-**Mechanic:** Bombs, they destroy all blocks on their column and adjacent columns, can trigger chain reaction with other bombs on the same full column.
+**Mechanic:** Bombs, they destroy all blocks on their column and adjacent columns, can trigger chain reaction with other bombs that are on the same full row.
 
 ---
 
