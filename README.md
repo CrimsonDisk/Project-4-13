@@ -5,7 +5,7 @@
 </div>
 
 ## Team members:
-- [Crimson Disk](https://github.com/CrimsonDisk)
+- [CrimsonDisk](https://github.com/CrimsonDisk)
 - [hohoanghung102007-cloud](https://github.com/hohoanghung102007-cloud)
 - [dangkh04](https://github.com/dangkh04)
 - [Khuenguyen301107](https://github.com/Khuenguyen301107)
