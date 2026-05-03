@@ -61,7 +61,7 @@ public class Ui extends JPanel {
             g2.drawImage(sidebarBg, sidebarX, 0, sidebarWidth, getHeight(), null);
         }
 
-        g2.setColor(Color.WHITE);
+        g2.setColor(Color.BLACK);
         g2.setFont(new Font("Arial", Font.BOLD, 10 * winScale));
         int textX = sidebarX + (15 * winScale);
 
