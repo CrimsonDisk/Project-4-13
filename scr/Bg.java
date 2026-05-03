@@ -12,7 +12,7 @@ public class Bg {
     private long lastUpdate;
 
     private int frameNumber = 5;
-    private int loadFrameAfterSecond = 500;
+    private int loadFrameAfterMilliSec = 400;
 
     public Bg() {
         try {
@@ -26,7 +26,7 @@ public class Bg {
 
     public void updateAnimation() {
         long ima = System.currentTimeMillis();
-        if (ima - lastUpdate >= loadFrameAfterSecond) {
+        if (ima - lastUpdate >= loadFrameAfterMilliSec) {
             currentFrame += frameDirection;
             if (currentFrame >= 4 || currentFrame <= 0) {
                 frameDirection *= -1; //The order should go 1 to 5 then reverse back to 1, nice

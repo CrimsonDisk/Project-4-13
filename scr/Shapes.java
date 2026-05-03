@@ -3,104 +3,118 @@ import java.util.Random;
 public class Shapes {
     //---[The shapes]---
     public static final int [][][] SHAPES = {
-        { // O shape
+        { // o shape - i0
             {1, 1, 0},
             {1, 1, 0},
             {0, 0, 0}
         },
-        { // I shape
+        { // I shape - i1
             {0, 1, 0},
             {0, 1, 0},
             {0, 1, 0}
         },
-        { // L shape
-            {0, 1, 0},
-            {0, 1, 0},
-            {0, 1, 1}
-        },
-        { // i shape
+        { // i shape - i2
             {0, 1, 0},
             {0, 1, 0},
             {0, 0, 0}
         },
-        { // J shape
-            {0, 1, 0},
-            {0, 1, 0},
-            {1, 1, 0}
-        },
-        { // dot shape
+        { // dot shape - i3
             {0, 0, 0},
             {0, 1, 0},
             {0, 0, 0}
         },
-        { // T shape
+        { // t shape - i4
+            {1, 1, 1},
+            {0, 1, 0},
+            {0, 0, 0}
+        },
+        { // u shape - i5
+            {1, 0, 1},
+            {1, 1, 1},
+            {0, 0, 0}
+        },
+        { // z shape - i6 --[Less frequent shapes]--
+            {1, 1, 0},
+            {0, 1, 1},
+            {0, 0, 0}
+        },
+        { // z' shape - i7
+            {0, 1, 1},
+            {1, 1, 0},
+            {0, 0, 0}
+        },
+        { // Door shape - i8
+            {1, 1, 0},
+            {1, 1, 0},
+            {1, 1, 0}
+        },
+        { // L shape - i9 --[Starting here is hard, I think]--
+            {0, 1, 0},
+            {0, 1, 0},
+            {0, 1, 1}
+        },
+        { // J shape - i10
+            {0, 1, 0},
+            {0, 1, 0},
+            {1, 1, 0}
+        },
+        { // T shape - i11
             {1, 1, 1},
             {0, 1, 0},
             {0, 1, 0}
-        },        
-        { // t shape
-            {1, 1, 1},
-            {0, 1, 0},
-            {0, 0, 0}
-        },        
-        { // z shape
-            {1, 1, 0},
-            {0, 1, 1},
-            {0, 0, 0}
         },
-        { // z' shape
-            {0, 1, 1},
-            {1, 1, 0},
-            {0, 0, 0}
-        },
-        { // Z shape
+        { // Z shape - i12
             {1, 1, 0},
             {0, 1, 0},
             {0, 1, 1}
         },
-        { // Z' shape
+        { // Z' shape - i13
             {0, 1, 1},
             {0, 1, 0},
             {1, 1, 0}
         },
-        { // 3x3 shape
+        { // 3x3 shape - i14
             {1, 1, 1},
             {1, 1, 1},
             {1, 1, 1}
         },
-        { // Cross shape
+        { // Cross shape - i15
             {0, 1, 0},
             {1, 1, 1},
             {0, 1, 0}
         },
-        { // U shape
+        { // U shape - i16
             {1, 0, 1},
             {1, 0, 1},
             {1, 1, 1}
         },
-        { // u shape
-            {1, 0, 1},
-            {1, 1, 1},
-            {0, 0, 0}
-        },
-        { // A shape
+        { // A shape - i17
             {1, 1, 1},
             {1, 1, 1},
             {1, 0, 1}
         },
-        { // Door shape
-            {1, 1, 0},
-            {1, 1, 0},
-            {1, 1, 0}
-        },
     };
 
     public static int[][] getRandomShape() {
-        return SHAPES[new Random().nextInt(SHAPES.length)];
+        Random rand = new Random();
+        int roll = rand.nextInt(100);
+
+        // 70% chance for indices 0-5
+        if (roll < 70) { 
+            return SHAPES[rand.nextInt(6)];
+        } 
+        // 20% change for indices 6-9
+        else if (roll < 90) {
+            return SHAPES[6 + rand.nextInt(3)];
+        }
+        // 10% chance for indices 9-17
+        else {
+            return SHAPES[9 + rand.nextInt(8)];
+        }
     }
 
     public static int[][] rotate(int[][] matrix, boolean clockwise) {
-        int n = 3;
+        int n = matrix.length;
         int[][] result = new int[n][n];
 
         for (int row = 0; row < n; row++) {
