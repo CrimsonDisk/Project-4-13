@@ -1,11 +1,13 @@
 <div align="center">
-#This is for a school project, nothing else.
+# This is for a school project, nothing else.
 </div>
-##Team members:
+## Team members:
 - Crimson Disk
 - hohoanghung102007-cloud
 - dangkh04
 - Khuenguyen301107
+
+---
 
 <div align="center">
 
