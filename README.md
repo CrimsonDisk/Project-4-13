@@ -2,8 +2,6 @@
 
 # This is for a school project, nothing else.
 
-</div>
-
 ## Team members:
 - [Crimson Disk](https://github.com/CrimsonDisk)
 - [hohoanghung102007-cloud](https://github.com/hohoanghung102007-cloud)
