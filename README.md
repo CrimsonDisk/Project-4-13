@@ -1,11 +1,14 @@
 <div align="center">
+
 # This is for a school project, nothing else.
+
 </div>
+
 ## Team members:
-- Crimson Disk
-- hohoanghung102007-cloud
-- dangkh04
-- Khuenguyen301107
+- [Crimson Disk](https://github.com/CrimsonDisk)
+- [hohoanghung102007-cloud](https://github.com/hohoanghung102007-cloud)
+- [dangkh04](https://github.com/dangkh04)
+- [Khuenguyen301107](https://github.com/Khuenguyen301107)
 
 ---
 
