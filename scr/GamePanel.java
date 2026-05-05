@@ -58,7 +58,7 @@ public class GamePanel extends JPanel implements Runnable {
         this.winScale = winScale;
         this.ui = ui;
         this.setPreferredSize(new Dimension(screenWidth * winScale, screenHeight * winScale));
-        this.setBackground(Color.BLACK);
+        this.setOpaque(false);
 
         // Loads texture for the entire game
         loadTexture();
@@ -346,6 +346,7 @@ public class GamePanel extends JPanel implements Runnable {
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
         Graphics2D g2 = (Graphics2D) g;
+        background.drawGameBG(g2, getWidth(), getHeight());
         background.drawGrid(g2, rows, cols, brickPixelHitBox, winScale);
 
         for (int r = rows - 1; r >= 0; r--) {

@@ -12,13 +12,15 @@ public class Ui extends JPanel {
     private int nextColorID;
     private int nextSpecialIndex;
     private BufferedImage[] borderImgs = new BufferedImage[8];
-    private final int borderSize = 13;
-    private int sidebarWideness = 12;
+    public static final int borderSize = 13;
+    private int sidebarWideness = 10;
     private int sidebarHeightPixelBased = 927; // Will remain unused, cus buggy
+    private Bg background = new Bg();
 
     private int scorePositionY = GamePanel.brickPixelHitBox * 3;
     private int scoreValuePositionY = GamePanel.brickPixelHitBox * 4;
-    private int nextPositionY = GamePanel.brickPixelHitBox * 6;
+    private int nextPositionY = GamePanel.brickPixelHitBox * 7;
+    private int nextInLineShapeY = GamePanel.brickPixelHitBox * 8;
 
     // --- [Border Texture Loading] ---
     private void loadBorderTextures() {
@@ -95,8 +97,10 @@ public class Ui extends JPanel {
         int gh = gamePanel.getHeight();
 
         // The sidebar background
-        g2.setColor(new Color(30, 30, 30));
-        g2.fillRect(gw + bs, bs, getWidth() - (gw + bs), getHeight() - (bs * 2));
+        background.drawSidebarBG(g2, gw + bs, bs, getWidth() - (gw + bs), getHeight() - (bs * 2));
+        
+        //g2.setColor(new Color(30, 30, 30));
+        //g2.fillRect(gw + bs, bs, getWidth() - (gw + bs), getHeight() - (bs * 2));
 
         if (borderImgs[0] != null) {
             // Corners
@@ -117,7 +121,7 @@ public class Ui extends JPanel {
         }
 
         //---[UI text styling stuff]---
-        g2.setColor(Color.WHITE);
+        g2.setColor(Color.BLACK);
         g2.setFont(new Font("Arial", Font.BOLD, 10 * winScale));
         
         int textX = gw + (GamePanel.brickPixelHitBox * 3) * winScale; // Text position in sidebar, 4 blocks away from the game area
@@ -135,7 +139,7 @@ public class Ui extends JPanel {
                 for (int c = 0; c < nextShape[r].length; c++) {
                     if (nextShape[r][c] == 1) {
                         int previewX = textX + (c * gamePanel.brickPixelHitBox * winScale);
-                        int previewY = (gamePanel.previewNextPiecePositionY * winScale / 2) + (r * gamePanel.brickPixelHitBox * winScale);
+                        int previewY = (nextInLineShapeY * winScale) + (r * gamePanel.brickPixelHitBox * winScale);
 
                         if (nextBlockCount == nextSpecialIndex) {
                             g2.setColor(Color.DARK_GRAY);
