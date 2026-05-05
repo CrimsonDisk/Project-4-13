@@ -1,3 +1,4 @@
+import java.awt.Color;
 import javax.swing.*;
 
 public class Main {
@@ -12,6 +13,7 @@ public class Main {
         //---[Title and going borderless]---
         JFrame gameframe = new JFrame("Project 3-14 beta3");
         gameframe.setUndecorated(true);
+        gameframe.setBackground(new Color(0, 0, 0, 0));
         gameframe.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
         //---[Game stuff and display size]---

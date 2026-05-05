@@ -16,6 +16,10 @@ public class Ui extends JPanel {
     private int sidebarWideness = 12;
     private int sidebarHeightPixelBased = 927; // Will remain unused, cus buggy
 
+    private int scorePositionY = GamePanel.brickPixelHitBox * 3;
+    private int scoreValuePositionY = GamePanel.brickPixelHitBox * 4;
+    private int nextPositionY = GamePanel.brickPixelHitBox * 6;
+
     // --- [Border Texture Loading] ---
     private void loadBorderTextures() {
         String[] borderTypes = {
@@ -84,23 +88,44 @@ public class Ui extends JPanel {
     // --- [Rendering] ---
     @Override
     protected void paintComponent(Graphics g) {
-        super.paintComponent(g);
         Graphics2D g2 = (Graphics2D) g;
+        
+        int bs = borderSize * winScale;
+        int gw = gamePanel.getWidth();
+        int gh = gamePanel.getHeight();
 
         // The sidebar background
         g2.setColor(new Color(30, 30, 30));
-        g2.fillRect(gamePanel.getWidth(), 0, getWidth() - gamePanel.getWidth(), getHeight());
+        g2.fillRect(gw + bs, bs, getWidth() - (gw + bs), getHeight() - (bs * 2));
+
+        if (borderImgs[0] != null) {
+            // Corners
+            g2.drawImage(borderImgs[0], 0, 0, bs, bs, null); // Top-left
+            g2.drawImage(borderImgs[1], gw + bs, 0, bs, bs, null); // Top-right
+            g2.drawImage(borderImgs[2], 0, gh + bs, bs, bs, null);
+            g2.drawImage(borderImgs[3], gw + bs, gh + bs, bs,bs, null); // Bottom-right
+            // Horizontal lines (top and bottom)
+            for (int x = bs; x < gw + bs; x += bs) { // We don't start at 0, cus the corners will be there
+                g2.drawImage(borderImgs[4], x, 0, bs, bs, null); // Top line
+                g2.drawImage(borderImgs[5], x, gh + bs, bs, bs, null); // Bottom line
+            }
+            // Vertical lines (left and right)
+            for (int y = bs; y < gh + bs; y += bs) {
+                g2.drawImage(borderImgs[6], 0, y, bs, bs, null); // Left line
+                g2.drawImage(borderImgs[7], gw + bs, y, bs, bs, null); // Right line
+            }
+        }
 
         //---[UI text styling stuff]---
         g2.setColor(Color.WHITE);
         g2.setFont(new Font("Arial", Font.BOLD, 10 * winScale));
         
-        int textX = gamePanel.getWidth() + (20 * winScale / 2);
+        int textX = gw + (GamePanel.brickPixelHitBox * 3) * winScale; // Text position in sidebar, 4 blocks away from the game area
 
-        g2.drawString("SCORE", textX, 50 * winScale / 2);
-        g2.drawString(String.format("%06d", score), textX, 80 * winScale / 2);
+        g2.drawString("SCORE", textX, scorePositionY * winScale);
+        g2.drawString(String.format("%06d", score), textX, scoreValuePositionY * winScale);
 
-        g2.drawString("NEXT", textX, 150 * winScale / 2);
+        g2.drawString("NEXT", textX, nextPositionY * winScale);
 
         // Draw the next piece preview, yosh
         if (nextShape != null) {

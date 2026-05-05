@@ -73,7 +73,7 @@ public class GamePanel extends JPanel implements Runnable {
         Thread gameThread = new Thread(this);
         gameThread.start();
 
-        // Key! Controls! (This is a lot of code, but it's mostly just key controls and some game over menu stuff, nothing too crazy)
+        // Key! Controls! (This is a lot of code, but it's mostly just key controls and some game over menu stuff)
         this.setFocusable(true); // So the panel can receive key events
         this.addKeyListener(new java.awt.event.KeyAdapter() {
             @Override
