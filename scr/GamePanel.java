@@ -51,14 +51,18 @@ public class GamePanel extends JPanel implements Runnable {
     private boolean isGameOver = false; // Game over flag
     private int gameOverOption = 0; // 0 for retry, 1 for exit, default is 0
     private int frameCounter = 0; // Frame counter for controlling falling speed
+    private Player player;
+    private PlayerManager manager;
 
     // --- [Main Constructor for the game, with key controls] ---
-    public GamePanel(int winScale, Ui ui) {
+    public GamePanel(int winScale, Ui ui, Player player, PlayerManager manager) {
         // Set up the main window and UI reference
         this.winScale = winScale;
         this.ui = ui;
         this.setPreferredSize(new Dimension(screenWidth * winScale, screenHeight * winScale));
         this.setOpaque(false);
+        this.player = player;
+        this.manager = manager;
 
         // Loads texture for the entire game
         loadTexture();
@@ -115,6 +119,14 @@ public class GamePanel extends JPanel implements Runnable {
                 if (e.getKeyCode() == java.awt.event.KeyEvent.VK_DOWN) { isFastFalling = false; }
             }
         });
+    }
+
+    //
+    private void checkAndSaveHighScore() {
+        if (ui.getScore() > player.getScore()) {
+            player.setScore(ui.getScore());
+            manager.savePlayers(); // This writes it to the .dat file
+        }
     }
 
     //---[The shape spawn thing]---

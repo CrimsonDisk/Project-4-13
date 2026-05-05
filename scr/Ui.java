@@ -16,9 +16,11 @@ public class Ui extends JPanel {
     private int sidebarWideness = 10;
     private int sidebarHeightPixelBased = 927; // Will remain unused, cus buggy
     private Bg background = new Bg();
+    private Player currentPlayer;
 
     private int scorePositionY = GamePanel.brickPixelHitBox * 3;
     private int scoreValuePositionY = GamePanel.brickPixelHitBox * 4;
+    private int playerNamePositionY = GamePanel.brickPixelHitBox * 6;
     private int nextPositionY = GamePanel.brickPixelHitBox * 7;
     private int nextInLineShapeY = GamePanel.brickPixelHitBox * 8;
 
@@ -45,8 +47,9 @@ public class Ui extends JPanel {
     }
 
     // --- [Constructors section] ---
-    public Ui(int winScale) {
+    public Ui(int winScale, Player player) {
         this.winScale = winScale;
+        this.currentPlayer = player;
         loadBorderTextures();
         
         int gameWidth = GamePanel.cols * GamePanel.brickPixelHitBox * winScale; 
@@ -57,7 +60,7 @@ public class Ui extends JPanel {
         this.setLayout(null); // Using null layout to PRECISELY position gamePanel inside the border
         this.setOpaque(false);
 
-        gamePanel = new GamePanel(winScale, this);
+        gamePanel = new GamePanel(winScale, this, player);
         // Position gamePanel offset by the border size
         gamePanel.setBounds(borderSize * winScale, borderSize * winScale, gameWidth, GamePanel.rows * GamePanel.brickPixelHitBox * winScale);
         this.add(gamePanel);
@@ -128,6 +131,10 @@ public class Ui extends JPanel {
 
         g2.drawString("SCORE", textX, scorePositionY * winScale);
         g2.drawString(String.format("%06d", score), textX, scoreValuePositionY * winScale);
+
+        g2.setColor(new Color(0, 102, 204)); // Random ahh blue go!
+        int playerY = playerNamePositionY * winScale;
+        g2.drawString("[" + currentPlayer.getName() + "]", textX, playerY + (10 * winScale));
 
         g2.drawString("NEXT", textX, nextPositionY * winScale);
 
