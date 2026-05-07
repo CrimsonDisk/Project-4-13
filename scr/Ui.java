@@ -138,7 +138,7 @@ public class Ui extends JPanel {
         g2.drawString(String.format("%06d", score), textX, scoreValuePositionY * winScale);
 
         int playerY = playerNamePositionY * winScale;
-        g2.drawString("[" + currentPlayer.getName() + "]", textX, playerY + (10 * winScale));
+        g2.drawString("[ " + currentPlayer.getName() + " ]", textX, playerY + (10 * winScale));
 
         g2.drawString("NEXT", textX, nextPositionY * winScale);
 
