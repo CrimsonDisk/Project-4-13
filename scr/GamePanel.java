@@ -157,6 +157,7 @@ public class GamePanel extends JPanel implements Runnable {
         // Check if the new current shape spawns in a valid position, if not, game over, literally, again!
         if (!isValidPosition(brickX, brickY, currentShape)) {
             isGameOver = true;
+            checkAndSaveHighScore();
             sfxPlayer.playSFX("resources/sfx/forklift-certified.wav");
         }
     }

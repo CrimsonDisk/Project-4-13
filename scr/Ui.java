@@ -20,7 +20,7 @@ public class Ui extends JPanel {
 
     private int scorePositionY = GamePanel.brickPixelHitBox * 3;
     private int scoreValuePositionY = GamePanel.brickPixelHitBox * 4;
-    private int playerNamePositionY = GamePanel.brickPixelHitBox * 6;
+    private int playerNamePositionY = GamePanel.brickPixelHitBox * 5;
     private int nextPositionY = GamePanel.brickPixelHitBox * 7;
     private int nextInLineShapeY = GamePanel.brickPixelHitBox * 8;
 
@@ -47,7 +47,7 @@ public class Ui extends JPanel {
     }
 
     // --- [Constructors section] ---
-    public Ui(int winScale, Player player) {
+    public Ui(int winScale, Player player, PlayerManager manager) {
         this.winScale = winScale;
         this.currentPlayer = player;
         loadBorderTextures();
@@ -60,7 +60,7 @@ public class Ui extends JPanel {
         this.setLayout(null); // Using null layout to PRECISELY position gamePanel inside the border
         this.setOpaque(false);
 
-        gamePanel = new GamePanel(winScale, this, player);
+        gamePanel = new GamePanel(winScale, this, player, manager);
         // Position gamePanel offset by the border size
         gamePanel.setBounds(borderSize * winScale, borderSize * winScale, gameWidth, GamePanel.rows * GamePanel.brickPixelHitBox * winScale);
         this.add(gamePanel);
@@ -72,6 +72,10 @@ public class Ui extends JPanel {
 
     public void resetScore () {
         this.score = 0;
+    }
+
+    public int getScore() {
+        return this.score;
     }
 
     public void setNextShape(int[][] shape) {
@@ -132,7 +136,6 @@ public class Ui extends JPanel {
         g2.drawString("SCORE", textX, scorePositionY * winScale);
         g2.drawString(String.format("%06d", score), textX, scoreValuePositionY * winScale);
 
-        g2.setColor(new Color(0, 102, 204)); // Random ahh blue go!
         int playerY = playerNamePositionY * winScale;
         g2.drawString("[" + currentPlayer.getName() + "]", textX, playerY + (10 * winScale));
 
