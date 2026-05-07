@@ -23,7 +23,7 @@ public class PlayerManager {
         for (int i = 0; i < players.size(); i++) { // Regular 0 to [Numbers of profiles - 1] for actual profiles
             options[i] = players.get(i).getName() + " - High Score: " + players.get(i).getScore();
         }
-        options[players.size()] = "Add New Player...";
+        options[players.size()] = "Add Player";
 
         int selection = JOptionPane.showOptionDialog(null, "Select your profile:", "Player List",
                 JOptionPane.DEFAULT_OPTION, JOptionPane.QUESTION_MESSAGE, null, options, options[0]);

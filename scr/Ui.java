@@ -17,6 +17,7 @@ public class Ui extends JPanel {
     private int sidebarHeightPixelBased = 927; // Will remain unused, cus buggy
     private Bg background = new Bg();
     private Player currentPlayer;
+    private int marginPixel = 2;
 
     private int scorePositionY = GamePanel.brickPixelHitBox * 3;
     private int scoreValuePositionY = GamePanel.brickPixelHitBox * 4;
@@ -140,6 +141,10 @@ public class Ui extends JPanel {
         g2.drawString("[" + currentPlayer.getName() + "]", textX, playerY + (10 * winScale));
 
         g2.drawString("NEXT", textX, nextPositionY * winScale);
+
+        // Black preview background
+        g2.setColor(Color.BLACK);
+        g2.fillRect(((borderSize * 2) + GamePanel.brickPixelHitBox * (GamePanel.cols + 1) - marginPixel) * winScale, (nextInLineShapeY - marginPixel) * winScale, (GamePanel.brickPixelHitBox * 3 + marginPixel + 1) * winScale, (GamePanel.brickPixelHitBox * 3 + marginPixel + 1) * winScale);
 
         // Draw the next piece preview, yosh
         if (nextShape != null) {
