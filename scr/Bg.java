@@ -32,7 +32,7 @@ public class Bg {
 
 public void drawGameBG(Graphics2D g2, int panelWidth, int panelHeight) {
     if (gameBG != null) {
-        // Draw starting at (0,0) and stretching to the full panel size
+        // Draw starting at (0,0) and then stretching to the full panel size
         g2.drawImage(gameBG, 0, 0, panelWidth, panelHeight, null);
     }
 }
@@ -44,6 +44,7 @@ public void drawSidebarBG(Graphics2D g2, int xArea, int yArea, int areaWidth, in
     }
 }
 
+    // This is the method that updates the current frame of the grid animation based on the time elapsed
     public void updateAnimation() {
         long ima = System.currentTimeMillis();
         if (ima - lastUpdate >= loadFrameAfterMilliSec) {
@@ -55,6 +56,7 @@ public void drawSidebarBG(Graphics2D g2, int xArea, int yArea, int areaWidth, in
         }
     }
 
+    // This draws the grid animation
     public void drawGrid(Graphics2D g2, int rows, int cols, int brickSize, int scale) {
         if (gridFrames[currentFrame] == null)
             return;

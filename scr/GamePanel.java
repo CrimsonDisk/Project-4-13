@@ -121,15 +121,15 @@ public class GamePanel extends JPanel implements Runnable {
         });
     }
 
-    //
+    // --- [High score saving function] ---
     private void checkAndSaveHighScore() {
-        if (ui.getScore() > player.getScore()) {
+        if (ui.getScore() > player.getScore()) { // If the current score is higher than the saved score, update it
             player.setScore(ui.getScore());
             manager.savePlayers(); // This writes it to the .dat file
         }
     }
 
-    //---[The shape spawn thing]---
+    // --- [The shape spawn thing] ---
     private void spawnNewShape() {
 
         // Creates the next shape of bricks if it doesn't exist, and randomizes its colour and bomb placement
@@ -228,7 +228,7 @@ public class GamePanel extends JPanel implements Runnable {
         sfxPlayer.playSFX("resources/sfx/SpiderBounce1.wav");
     }
 
-    //---[This is the popping mechanic I think, there's so much now I'm confused]
+    // --- [This is the popping mechanic I think, there's so much now I'm confused] ---
     private void checkForFullRow() {
         for (int currentRow = rows - 1; currentRow > 0; currentRow--) {
             boolean rowIsFull = true; // Assume the row is full until we find an empty slot
@@ -271,7 +271,7 @@ public class GamePanel extends JPanel implements Runnable {
         } catch (Exception e) { System.out.println("Texture Error: " + e.getMessage()); }
     }
 
-    //---[Collision check for the ghost piece, this is used to determine how far down the ghost piece should be drawn, it works similarly to the isValidPosition function, but it checks for collisions at a specific position rather than just validating a position for the current falling piece]---
+    // --- [Collision check for the ghost piece, this is used to determine how far down the ghost piece should be drawn, it works similarly to the isValidPosition function, but it checks for collisions at a specific position rather than just validating a position for the current falling piece] ---
     private boolean checkPossibleCollision(int x, int y, int[][] shape) {
         for (int r = 0; r < shape.length; r++) {
             for (int c = 0; c < shape[r].length; c++) {
@@ -293,7 +293,7 @@ public class GamePanel extends JPanel implements Runnable {
         return false;
     }
 
-    //---[The brick preview]---
+    // --- [The brick preview] ---
     private int getLandingY() {
         int snappedGhostGridPositionY = (brickY / brickPixelHitBox) * brickPixelHitBox; // Snaps the ghost piece to the grid, this prevent weird animations (caused by the smooth falling)
         int ghostY = snappedGhostGridPositionY;
@@ -400,7 +400,7 @@ public class GamePanel extends JPanel implements Runnable {
             // Here will reset transparency to draw the REAL piece normally
             g2.setComposite(originalComposite);
 
-            //---[The falling shapes part]---
+            // --- [The falling shapes part] ---
             int fallingBlockCount = 0;
             for (int r = currentShape.length - 1; r >= 0; r--) {
                 for (int c = 0; c < currentShape[r].length; c++) {
@@ -421,32 +421,31 @@ public class GamePanel extends JPanel implements Runnable {
             }
         }
 
-        // ---[The brand new Game Over overlay]---
+        // --- [The brand new (no longer brand new by the moment whoever is reading this, hi there though!) Game Over overlay] ---
         if (isGameOver) {
             g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.7f));
             g2.setColor(Color.BLACK);
             g2.fillRect(0, 0, getWidth(), getHeight());
             g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1.0f));
 
-
+            // Calculate the size and position of the game over menu rectangle based on the window size and scale, this will make sure the menu is always centered and appropriately sized regardless of the window size or scale
             int rectW = 100 * winScale;
             int rectH = 60 * winScale;
             int rectX = (getWidth() - rectW) / 2;
             int rectY = (getHeight() - rectH) / 2;
 
-
+            // Draw the game over menu background and border
             g2.setColor(new Color(40, 40, 40));
             g2.fillRect(rectX, rectY, rectW, rectH);
             g2.setColor(Color.WHITE);
             g2.drawRect(rectX, rectY, rectW, rectH);
 
-
+            // Draw the game over text and options, with the currently selected option highlighted in red, this will also scale with the window size and scale to maintain readability
             g2.setFont(new Font("Arial", Font.BOLD, 12 * winScale));
             g2.drawString("GAME OVER", rectX + 15 * winScale, rectY + 20 * winScale);
 
             g2.setFont(new Font("Arial", Font.BOLD, 10 * winScale));
             
-
             g2.setColor(gameOverOption == 0 ? Color.RED : Color.WHITE);
             g2.drawString("RETRY", rectX + 30 * winScale, rectY + 40 * winScale);
 

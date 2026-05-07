@@ -113,6 +113,7 @@ public class Shapes {
         }
     }
 
+    // Twirl blocks around, clockwise or counterclockwise
     public static int[][] rotate(int[][] matrix, boolean clockwise) {
         int n = 3;
         int[][] result = new int[n][n];
@@ -122,7 +123,7 @@ public class Shapes {
                 if (clockwise) {
                     result[col][n - 1 - row] = matrix[row][col]; // Rotate clockwise
                 } else {
-                    result[n - 1 - col][row] = matrix[row][col];
+                    result[n - 1 - col][row] = matrix[row][col]; // Rotate counterclockwise
                 }
             }
         }
