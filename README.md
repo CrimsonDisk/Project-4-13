@@ -35,9 +35,9 @@ It's a Tetris game, but with a new mechanic to be less generic.
 - **Enter**, used to select an option
 
 ### Stuff used:
-- **Sonic Mania** sound effects
-- **Bad Apple!! (Sekai Mix)** the song
-- **A meme**
+- [**Sonic Mania**](https://www.youtube.com/watch?v=BUhuOwwD4n8) sound effects
+- [**Bad Apple!! (PJSK)**](https://www.youtube.com/watch?v=v-fc1zv31zE) the song
+- [**A meme**](https://x.com/cooldisks101/status/1497054170922115073?s=20)
 - Texture assets are **original**
 
 ![alt text](resources/forreadmefile/gameover.png)

@@ -25,7 +25,7 @@ public class PlayerManager {
         }
         options[players.size()] = "Add Player";
 
-        int selection = JOptionPane.showOptionDialog(null, "Select your profile:", "Player List",
+        int selection = JOptionPane.showOptionDialog(null, "Select your profile:", "Player List (Beta4.1)",
                 JOptionPane.DEFAULT_OPTION, JOptionPane.QUESTION_MESSAGE, null, options, options[0]);
 
         if (selection == -1) System.exit(0);
